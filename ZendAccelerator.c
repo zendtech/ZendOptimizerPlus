@@ -2098,10 +2098,6 @@ static int accelerator_remove_cb(zend_extension *element1, zend_extension *eleme
 
 	if (!strcmp(element1->name, ACCELERATOR_PRODUCT_NAME )) {
 		element1->startup = NULL;
-#if 0
-		/* We have to call shutdown callback it to free TS resources */
-		element1->shutdown = NULL;
-#endif
 		element1->activate = NULL;
 		element1->deactivate = NULL;
 		element1->op_array_handler = NULL;
@@ -2348,17 +2344,6 @@ int accel_startup(TSRMLS_D)
 	return SUCCESS;
 }
 
-static void accel_free_ts_resources()
-{
-#if 0
-#ifndef ZTS
-	accel_globals_dtor(&accel_globals);
-#else
-	ts_free_id(accel_globals_id);
-#endif
-#endif
-}
-
 void accel_shutdown(TSRMLS_D)
 {
 	zend_ini_entry *ini_entry;
@@ -2366,11 +2351,9 @@ void accel_shutdown(TSRMLS_D)
 	zend_accel_blacklist_shutdown(&accel_blacklist);
 
 	if (!ZCG(startup_ok)) {
-		accel_free_ts_resources();
 		return;
 	}
 
-	accel_free_ts_resources();
 	zend_shared_alloc_shutdown();
 	zend_compile_file = accelerator_orig_compile_file;
 
