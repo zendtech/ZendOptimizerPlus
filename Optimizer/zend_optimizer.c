@@ -55,7 +55,6 @@ int zend_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC)
 }
 #endif
 
-
 # define LITERAL_LONG(op, val) do { \
 		zval _c; \
 		ZVAL_LONG(&_c, val); \
@@ -96,14 +95,8 @@ int zend_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC)
 #include "Optimizer/block_pass.c"
 #include "Optimizer/optimize_temp_vars_5.c"
 
-void zend_optimizer_op_array_handler(zend_op_array *op_array)
-{
-	TSRMLS_FETCH();
-
-	if (ZCG(startup_ok) && ZCSG(accelerator_enabled)) {
-		zend_optimizer(op_array TSRMLS_CC);
-	}
-}
+static void zend_optimizer_op_array_handler(zend_op_array *op_array);
+static void zend_optimizer(zend_op_array *op_array TSRMLS_DC);
 
 ZEND_EXT_API zend_extension zend_optimizer_extension = {
 	ACCELERATOR_PRODUCT_NAME,               /* name */
@@ -125,7 +118,20 @@ ZEND_EXT_API zend_extension zend_optimizer_extension = {
 	STANDARD_ZEND_EXTENSION_PROPERTIES
 };
 
-void zend_optimizer(zend_op_array *op_array TSRMLS_DC)
+int zend_optimizer_init(TSRMLS_D) {
+	return zend_register_extension(&zend_optimizer_extension, NULL);
+}
+
+static void zend_optimizer_op_array_handler(zend_op_array *op_array)
+{
+	TSRMLS_FETCH();
+
+	if (ZCG(startup_ok) && ZCSG(accelerator_enabled)) {
+		zend_optimizer(op_array TSRMLS_CC);
+	}
+}
+
+static void zend_optimizer(zend_op_array *op_array TSRMLS_DC)
 {
 	if (op_array->type == ZEND_EVAL_CODE ||
 	    (op_array->fn_flags & ZEND_ACC_INTERACTIVE)) {
@@ -171,6 +177,3 @@ void zend_optimizer(zend_op_array *op_array TSRMLS_DC)
 #include "Optimizer/pass10.c"
 }
 
-int zend_optimizer_init(TSRMLS_D) {
-	return zend_register_extension(&zend_optimizer_extension, NULL);
-}
