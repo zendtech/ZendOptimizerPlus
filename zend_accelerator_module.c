@@ -322,25 +322,17 @@ static void accel_is_readable(INTERNAL_FUNCTION_PARAMETERS)
 	accel_file_in_cache(FS_IS_R, INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
-static void accel_globals_ctor(zend_accel_globals **accel_globals TSRMLS_DC)
-{
-	memset((*accel_globals), 0, sizeof(zend_accel_globals));
-	zend_hash_init(&((*accel_globals)->function_table), zend_hash_num_elements(CG(function_table)), NULL, ZEND_FUNCTION_DTOR, 1);
-}
+static void accel_globals_ctor(zend_accel_globals **accel_globals TSRMLS_DC){}
+static void accel_globals_dtor(zend_accel_globals **accel_globals TSRMLS_DC){}
 
-static void accel_globals_dtor(zend_accel_globals **accel_globals TSRMLS_DC)
-{
-	(*accel_globals)->function_table.pDestructor = NULL;
-	zend_hash_destroy(&((*accel_globals)->function_table));
-}
-
-static ZEND_GINIT_FUNCTION(accel)
-{
-	ZEND_INIT_MODULE_GLOBALS(accel, accel_globals_ctor, accel_globals_dtor);
-}
+static ZEND_GINIT_FUNCTION(accel){}
 
 static ZEND_MINIT_FUNCTION(zend_accelerator)
 {
+	ZEND_INIT_MODULE_GLOBALS(accel, accel_globals_ctor, accel_globals_dtor);
+	
+	zend_hash_init(&ZCG(function_table), zend_hash_num_elements(CG(function_table)), NULL, ZEND_FUNCTION_DTOR, 1);
+	
 	/* must be 0 before the ini entry OnUpdate function is called */
 	accel_blacklist.entries = NULL;
 
@@ -380,6 +372,9 @@ void zend_accel_override_file_functions(TSRMLS_D)
 static ZEND_MSHUTDOWN_FUNCTION(zend_accelerator)
 {
 	accel_shutdown(TSRMLS_C);	
+	
+	ZCG(function_table).pDestructor = NULL;
+	zend_hash_destroy(&ZCG(function_table));	
 
 	UNREGISTER_INI_ENTRIES();
 
