@@ -433,6 +433,10 @@ zend_module_entry accel_module_entry = {
 	STANDARD_MODULE_PROPERTIES_EX
 };
 
+#ifdef COMPILE_DL_ZENDOPTIMIZERPLUS
+ZEND_GET_MODULE(accel)
+#endif
+
 /* {{{ proto array accelerator_get_scripts()
    Get the scripts which are accelerated by ZendAccelerator */
 static zval* accelerator_get_scripts(TSRMLS_D)
