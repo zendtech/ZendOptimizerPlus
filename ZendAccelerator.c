@@ -2446,13 +2446,3 @@ void accelerator_shm_read_unlock(TSRMLS_D)
 		accel_deactivate_now();
 	}
 }
-
-static void accel_op_array_handler(zend_op_array *op_array)
-{
-	TSRMLS_FETCH();
-
-	if (ZCG(startup_ok) && ZCSG(accelerator_enabled)) {
-		zend_optimizer(op_array TSRMLS_CC);
-	}
-}
-

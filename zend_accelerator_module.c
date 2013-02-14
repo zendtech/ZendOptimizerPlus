@@ -341,7 +341,11 @@ static ZEND_MINIT_FUNCTION(zend_accelerator)
 	zend_set_user_opcode_handler(ZEND_DECLARE_INHERITED_CLASS_DELAYED, ZEND_DECLARE_INHERITED_CLASS_DELAYED_HANDLER);
 
 	accel_startup(TSRMLS_C);
-	
+
+	if (zend_optimizer_init(TSRMLS_C) != SUCCESS) {
+		/* do something here */
+	}
+
 	return SUCCESS;
 }
 

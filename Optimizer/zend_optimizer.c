@@ -96,6 +96,35 @@ int zend_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC)
 #include "Optimizer/block_pass.c"
 #include "Optimizer/optimize_temp_vars_5.c"
 
+void zend_optimizer_op_array_handler(zend_op_array *op_array)
+{
+	TSRMLS_FETCH();
+
+	if (ZCG(startup_ok) && ZCSG(accelerator_enabled)) {
+		zend_optimizer(op_array TSRMLS_CC);
+	}
+}
+
+ZEND_EXT_API zend_extension zend_optimizer_extension = {
+	ACCELERATOR_PRODUCT_NAME,               /* name */
+	ACCELERATOR_VERSION,					/* version */
+	"Zend Technologies",					/* author */
+	"http://www.zend.com/",					/* URL */
+	"Copyright (c) 1999-2013",				/* copyright */
+	NULL,					   				/* startup */
+	NULL,									/* shutdown */
+	NULL,									/* per-script activation */
+	NULL,									/* per-script deactivation */
+	NULL,									/* message handler */
+	zend_optimizer_op_array_handler,		/* op_array handler */
+	NULL,									/* extended statement handler */
+	NULL,									/* extended fcall begin handler */
+	NULL,									/* extended fcall end handler */
+	NULL,									/* op_array ctor */
+	NULL,									/* op_array dtor */
+	STANDARD_ZEND_EXTENSION_PROPERTIES
+};
+
 void zend_optimizer(zend_op_array *op_array TSRMLS_DC)
 {
 	if (op_array->type == ZEND_EVAL_CODE ||
@@ -140,4 +169,8 @@ void zend_optimizer(zend_op_array *op_array TSRMLS_DC)
 	 * - remove NOPs
 	 */
 #include "Optimizer/pass10.c"
+}
+
+int zend_optimizer_init(TSRMLS_D) {
+	return zend_register_extension(&zend_optimizer_extension, NULL);
 }

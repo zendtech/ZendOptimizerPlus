@@ -44,6 +44,7 @@
 
 #define DEFAULT_OPTIMIZATION_LEVEL  "0xFFFFFFFF"
 
+void zend_optimizer_op_array_handler(zend_op_array *op_array);
 void zend_optimizer(zend_op_array *op_array TSRMLS_DC);
-
+int  zend_optimizer_init(TSRMLS_D);
 #endif
