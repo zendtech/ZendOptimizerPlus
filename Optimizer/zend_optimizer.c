@@ -29,6 +29,8 @@
 	ZCG(accel_directives).optimization_level
 
 #if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
+
+#if 0
 int zend_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC)
 {
 	int i = op_array->last_literal;
@@ -51,6 +53,8 @@ int zend_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC)
 	Z_SET_ISREF(op_array->literals[i].constant);
 	return i;
 }
+#endif
+
 
 # define LITERAL_LONG(op, val) do { \
 		zval _c; \

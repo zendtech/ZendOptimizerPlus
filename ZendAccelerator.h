@@ -299,6 +299,10 @@ extern zend_accel_globals accel_globals;
 
 extern char *zps_api_failure_reason;
 
+int accel_startup(TSRMLS_D);
+void accel_activate(TSRMLS_D);
+void accel_deactivate(TSRMLS_D);
+void accel_shutdown(TSRMLS_D);
 void zend_accel_schedule_restart(TSRMLS_D);
 int  accelerator_shm_read_lock(TSRMLS_D);
 void accelerator_shm_read_unlock(TSRMLS_D);
