@@ -234,8 +234,6 @@ ZEND_INI_BEGIN()
 #endif
 ZEND_INI_END()
 
-#if ZEND_EXTENSION_API_NO < PHP_5_3_X_API_NO
-
 #undef  EX
 #define EX(element) execute_data->element
 #define EX_T(offset) (*(temp_variable *)((char *) EX(Ts) + offset))
@@ -244,15 +242,14 @@ static int ZEND_DECLARE_INHERITED_CLASS_DELAYED_HANDLER(ZEND_OPCODE_HANDLER_ARGS
 {
 	zend_class_entry **pce, **pce_orig;
 
-	if (zend_hash_find(EG(class_table), Z_STRVAL(EX(opline)->op2.u.constant), Z_STRLEN(EX(opline)->op2.u.constant)+1, (void **)&pce) == FAILURE ||
-	    (zend_hash_find(EG(class_table), Z_STRVAL(EX(opline)->op1.u.constant), Z_STRLEN(EX(opline)->op1.u.constant), (void**)&pce_orig) == SUCCESS &&
+	if (zend_hash_find(EG(class_table), Z_STRVAL(EX_T(EX(opline)->op2.constant).tmp_var), Z_STRLEN(EX_T(EX(opline)->op2.constant).tmp_var)+1, (void **)&pce) == FAILURE ||
+	    (zend_hash_find(EG(class_table),Z_STRVAL(EX_T(EX(opline)->op1.constant).tmp_var), Z_STRLEN(EX_T(EX(opline)->op1.constant).tmp_var), (void**)&pce_orig) == SUCCESS &&
 	     *pce != *pce_orig)) {
-		do_bind_inherited_class(EX(opline), EG(class_table), EX_T(EX(opline)->extended_value).class_entry, 0 TSRMLS_CC);
+		do_bind_inherited_class(EX(op_array), EX(opline), EG(class_table), EX_T(EX(opline)->extended_value).class_entry, 0 TSRMLS_CC);
 	}
 	EX(opline)++;
 	return ZEND_USER_OPCODE_CONTINUE;
 }
-#endif
 
 static int filename_is_in_cache(char *filename, int filename_len TSRMLS_DC)
 {
@@ -325,17 +322,37 @@ static void accel_is_readable(INTERNAL_FUNCTION_PARAMETERS)
 	accel_file_in_cache(FS_IS_R, INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
+static void accel_globals_ctor(zend_accel_globals **accel_globals TSRMLS_DC){}
+static void accel_globals_dtor(zend_accel_globals **accel_globals TSRMLS_DC){}
+
+static ZEND_GINIT_FUNCTION(accel){}
+
 static ZEND_MINIT_FUNCTION(zend_accelerator)
 {
-	(void)type; /* keep the compiler happy */
-
+	ZEND_INIT_MODULE_GLOBALS(accel, accel_globals_ctor, accel_globals_dtor);
+	
+	zend_hash_init(&ZCG(function_table), zend_hash_num_elements(CG(function_table)), NULL, ZEND_FUNCTION_DTOR, 1);
+	
 	/* must be 0 before the ini entry OnUpdate function is called */
 	accel_blacklist.entries = NULL;
 
 	REGISTER_INI_ENTRIES();
-#if ZEND_EXTENSION_API_NO < PHP_5_3_X_API_NO
+
 	zend_set_user_opcode_handler(ZEND_DECLARE_INHERITED_CLASS_DELAYED, ZEND_DECLARE_INHERITED_CLASS_DELAYED_HANDLER);
-#endif
+
+	accel_startup(TSRMLS_C);
+
+	if (zend_optimizer_init(TSRMLS_C) != SUCCESS) {
+		/* do something here */
+	}
+
+	return SUCCESS;
+}
+
+static ZEND_RINIT_FUNCTION(zend_accelerator)
+{
+	accel_activate(TSRMLS_C);
+	
 	return SUCCESS;
 }
 
@@ -358,13 +375,24 @@ void zend_accel_override_file_functions(TSRMLS_D)
 
 static ZEND_MSHUTDOWN_FUNCTION(zend_accelerator)
 {
-	(void)type; /* keep the compiler happy */
+	accel_shutdown(TSRMLS_C);	
+	
+	ZCG(function_table).pDestructor = NULL;
+	zend_hash_destroy(&ZCG(function_table));	
 
 	UNREGISTER_INI_ENTRIES();
+
 	return SUCCESS;
 }
 
-void zend_accel_info(ZEND_MODULE_INFO_FUNC_ARGS)
+static ZEND_RSHUTDOWN_FUNCTION(zend_accelerator)
+{
+	accel_deactivate(TSRMLS_C);
+	
+	return SUCCESS;
+}
+
+static ZEND_MINFO_FUNCTION(zend_accelerator)
 {
 	php_info_print_table_start();
 
@@ -389,23 +417,25 @@ void zend_accel_info(ZEND_MODULE_INFO_FUNC_ARGS)
 	DISPLAY_INI_ENTRIES();
 }
 
-static zend_module_entry accel_module_entry = {
+zend_module_entry accel_module_entry = {
 	STANDARD_MODULE_HEADER,
 	ACCELERATOR_PRODUCT_NAME,
 	accel_functions,
 	ZEND_MINIT(zend_accelerator),
 	ZEND_MSHUTDOWN(zend_accelerator),
-	NULL,
-	NULL,
-	zend_accel_info,
+	ZEND_RINIT(zend_accelerator),
+	ZEND_RSHUTDOWN(zend_accelerator),
+	ZEND_MINFO(zend_accelerator),
     ACCELERATOR_VERSION "FE",
-	STANDARD_MODULE_PROPERTIES
+	ZEND_MODULE_GLOBALS(accel),
+	ZEND_GINIT(accel),
+	NULL, NULL,
+	STANDARD_MODULE_PROPERTIES_EX
 };
 
-int start_accel_module()
-{
-	return zend_startup_module(&accel_module_entry);
-}
+#ifdef COMPILE_DL_ZENDOPTIMIZERPLUS
+ZEND_GET_MODULE(accel)
+#endif
 
 /* {{{ proto array accelerator_get_scripts()
    Get the scripts which are accelerated by ZendAccelerator */

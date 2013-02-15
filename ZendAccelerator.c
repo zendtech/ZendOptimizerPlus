@@ -1824,10 +1824,8 @@ static void zend_reset_cache_vars(TSRMLS_D)
 	ZCSG(force_restart_time) = 0;
 }
 
-static void accel_activate(void)
+void accel_activate(TSRMLS_D)
 {
-	TSRMLS_FETCH();
-
 	if (!ZCG(startup_ok)) {
 		return;
 	}
@@ -2071,14 +2069,8 @@ static void zend_accel_fast_shutdown(TSRMLS_D)
 }
 #endif
 
-static void accel_deactivate(void)
+void accel_deactivate(TSRMLS_D)
 {
-	/* ensure that we restore function_table and class_table
-	 * In general, they're restored by persistent_compile_file(), but in case
-	 * the script is aborted abnormally, they may become messed up.
-	 */
-	TSRMLS_FETCH();
-
 	if (!ZCG(startup_ok)) {
 		return;
 	}
@@ -2106,10 +2098,6 @@ static int accelerator_remove_cb(zend_extension *element1, zend_extension *eleme
 
 	if (!strcmp(element1->name, ACCELERATOR_PRODUCT_NAME )) {
 		element1->startup = NULL;
-#if 0
-		/* We have to call shutdown callback it to free TS resources */
-		element1->shutdown = NULL;
-#endif
 		element1->activate = NULL;
 		element1->deactivate = NULL;
 		element1->op_array_handler = NULL;
@@ -2217,40 +2205,14 @@ static void zend_accel_init_shm(TSRMLS_D)
 	zend_shared_alloc_unlock(TSRMLS_C);
 }
 
-static void accel_globals_ctor(zend_accel_globals *accel_globals TSRMLS_DC)
-{
-	memset(accel_globals, 0, sizeof(zend_accel_globals));
-	zend_hash_init(&accel_globals->function_table, zend_hash_num_elements(CG(function_table)), NULL, ZEND_FUNCTION_DTOR, 1);
-	zend_accel_copy_internal_functions(TSRMLS_C);
-}
-
-static void accel_globals_dtor(zend_accel_globals *accel_globals TSRMLS_DC)
-{
-	accel_globals->function_table.pDestructor = NULL;
-	zend_hash_destroy(&accel_globals->function_table);
-}
-
-static int accel_startup(zend_extension *extension)
+int accel_startup(TSRMLS_D)
 {
 	zend_function *func;
 	zend_ini_entry *ini_entry;
-	TSRMLS_FETCH();
-
-#ifdef ZTS
-	accel_globals_id = ts_allocate_id(&accel_globals_id, sizeof(zend_accel_globals), (ts_allocate_ctor) accel_globals_ctor, (ts_allocate_dtor) accel_globals_dtor);
-#else
-	accel_globals_ctor(&accel_globals);
-#endif
 
 #ifdef ZEND_WIN32
 	_setmaxstdio(2048); /* The default configuration is limited to 512 stdio files */
 #endif
-
-	if (start_accel_module(0) == FAILURE) {
-		ZCG(startup_ok) = 0;
-		zend_error(E_WARNING, ACCELERATOR_PRODUCT_NAME ": module registration failed!");
-		return FAILURE;
-	}
 
 	/* no supported SAPI found - disable acceleration and stop initalization */
 	if( accel_find_sapi(TSRMLS_C) == FAILURE ){
@@ -2377,38 +2339,21 @@ static int accel_startup(zend_extension *extension)
 	/* Override file_exists(), is_file() and is_readable() */
 	zend_accel_override_file_functions(TSRMLS_C);
 
-#if 0
-	/* FIXME: We probably don't need it here */
 	zend_accel_copy_internal_functions(TSRMLS_C);
-#endif
 
 	return SUCCESS;
 }
 
-static void accel_free_ts_resources()
-{
-#ifndef ZTS
-	accel_globals_dtor(&accel_globals);
-#else
-	ts_free_id(accel_globals_id);
-#endif
-}
-
-static void accel_shutdown(zend_extension *extension)
+void accel_shutdown(TSRMLS_D)
 {
 	zend_ini_entry *ini_entry;
-	TSRMLS_FETCH();
-
-	(void)extension; /* keep the compiler happy */
-
+	
 	zend_accel_blacklist_shutdown(&accel_blacklist);
 
 	if (!ZCG(startup_ok)) {
-		accel_free_ts_resources();
 		return;
 	}
 
-	accel_free_ts_resources();
 	zend_shared_alloc_shutdown();
 	zend_compile_file = accelerator_orig_compile_file;
 
@@ -2484,32 +2429,3 @@ void accelerator_shm_read_unlock(TSRMLS_D)
 		accel_deactivate_now();
 	}
 }
-
-static void accel_op_array_handler(zend_op_array *op_array)
-{
-	TSRMLS_FETCH();
-
-	if (ZCG(startup_ok) && ZCSG(accelerator_enabled)) {
-		zend_optimizer(op_array TSRMLS_CC);
-	}
-}
-
-ZEND_EXT_API zend_extension zend_extension_entry = {
-	ACCELERATOR_PRODUCT_NAME,               /* name */
-	ACCELERATOR_VERSION,					/* version */
-	"Zend Technologies",					/* author */
-	"http://www.zend.com/",					/* URL */
-	"Copyright (c) 1999-2013",				/* copyright */
-	accel_startup,					   		/* startup */
-	accel_shutdown,							/* shutdown */
-	accel_activate,							/* per-script activation */
-	accel_deactivate,						/* per-script deactivation */
-	NULL,									/* message handler */
-	accel_op_array_handler,					/* op_array handler */
-	NULL,									/* extended statement handler */
-	NULL,									/* extended fcall begin handler */
-	NULL,									/* extended fcall end handler */
-	NULL,									/* op_array ctor */
-	NULL,									/* op_array dtor */
-	STANDARD_ZEND_EXTENSION_PROPERTIES
-};

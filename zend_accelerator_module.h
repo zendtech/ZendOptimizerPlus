@@ -22,7 +22,9 @@
 #ifndef ZEND_ACCELERAROR_MODULE_H
 #define ZEND_ACCELERATOR_MODULE_H
 
-int start_accel_module();
 void zend_accel_override_file_functions(TSRMLS_D);
+
+extern zend_module_entry accel_module_entry;
+#define phpext_ZendOptimizerPlus_ptr &accel_module_entry
 
 #endif /* _ZEND_ACCELERATOR_MODULE_H */
