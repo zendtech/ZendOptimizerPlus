@@ -36,12 +36,16 @@ if (!defined ("ZO_SETUP") ) {
 						break;
 					} else usleep(50000);
 				}
+
 				/* because it's good practice */
 				fclose($pipes[0]);	
 				fclose($pipes[1]);
-				/* in preparation for the next test */
-				@proc_terminate($process, SIGKILL);
 				
+				/* in preparation for the next test */
+				@proc_close($process);
+				
+				/* cannot kill $process, doesn't seem to matter */
+
 				return strlen($response);
 			}	
 		}
