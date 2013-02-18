@@ -25,21 +25,23 @@ if (!defined ("ZO_SETUP") ) {
 			   2 => array("file", sprintf("%s/server.log", ZO_DIR), "a")
 			), $pipes, ZO_DIR, null, $options))) {
 				$status = @proc_get_status($process);
-				$tries = 5;
-				while (--$tries) {
-					usleep(10000);
+				$tries = 10;
+				/* give cli-server a chance to start */
+				usleep(10000);
+				while ($tries--) {
+					/* check for a response */
 					if (($response = @file_get_contents(sprintf(
 						"http://%s:%d/test.php", ZO_ADDRESS, ZO_PORT
 					)))) {
 						break;
-					}
+					} else usleep(50000);
 				}
-				
+				/* because it's good practice */
 				fclose($pipes[0]);	
 				fclose($pipes[1]);
-				
+				/* in preparation for the next test */
 				@proc_terminate($process, SIGKILL);
-
+				
 				return strlen($response);
 			}	
 		}
