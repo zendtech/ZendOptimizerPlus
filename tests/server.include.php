@@ -40,7 +40,7 @@ if (!defined ("ZO_SETUP") ) {
 				
 				@proc_terminate($process, SIGKILL);
 
-				return true;
+				return strlen($response);
 			}	
 		}
 	}
