@@ -10,9 +10,10 @@ if (!defined ("ZO_SETUP") ) {
 	/*
 		Will write $code to ZO_ADDRESS:ZO_PORT/test.php and return the result of the request to that location
 	*/
-	function zo_serve($code, &$response, &$status, $options = array()) {
+	function zo_serve($name, $code, &$response, &$status, $options = array()) {
+		$name = basename($name);
 		if (@file_put_contents(sprintf(
-			"%s/test.php", ZO_DIR
+			"%s/%s", ZO_DIR, $name
 		), sprintf(
 			"<?\n%s\n?>", $code
 		))) {
@@ -31,7 +32,7 @@ if (!defined ("ZO_SETUP") ) {
 				while ($tries--) {
 					/* check for a response */
 					if (($response = @file_get_contents(sprintf(
-						"http://%s:%d/test.php", ZO_ADDRESS, ZO_PORT
+						"http://%s:%d/%s", ZO_ADDRESS, ZO_PORT, $name
 					)))) {
 						break;
 					} else usleep(50000);
@@ -42,10 +43,8 @@ if (!defined ("ZO_SETUP") ) {
 				fclose($pipes[1]);
 				
 				/* in preparation for the next test */
-				@proc_close($process);
+				@proc_terminate($process);
 				
-				/* cannot kill $process, doesn't seem to matter */
-
 				return strlen($response);
 			}	
 		}
@@ -53,7 +52,7 @@ if (!defined ("ZO_SETUP") ) {
 }
 
 if ($ZO_HTTP_REQUEST) {
-	if (zo_serve($ZO_HTTP_REQUEST, $response, $status)) {
+	if (zo_serve($ZO_HTTP_REQUEST_NAME, $ZO_HTTP_REQUEST, $response, $status)) {
 		echo $response;
 	} else var_dump($status);
 }
