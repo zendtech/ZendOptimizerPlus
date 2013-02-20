@@ -68,6 +68,7 @@
 #define FAILED_REATTACHED       2
 #define SUCCESSFULLY_REATTACHED 4
 #define ALLOC_FAIL_MAPPING      8
+#define PHP_OPTIMIZER_MMAP_FILE "/home/joe/mmaps"
 
 typedef struct _zend_shared_segment {
     size_t  size;
@@ -77,10 +78,16 @@ typedef struct _zend_shared_segment {
 
 typedef int (*create_segments_t)(size_t requested_size, zend_shared_segment ***shared_segments, int *shared_segment_count, char **error_in);
 typedef int (*detach_segment_t)(zend_shared_segment *shared_segment);
+#ifdef PHP_OPTIMIZER_MMAP_FILE
+typedef int (*close_segments_t)(void);
+#endif
 
 typedef struct {
 	create_segments_t create_segments;
 	detach_segment_t detach_segment;
+#ifdef PHP_OPTIMIZER_MMAP_FILE
+	close_segments_t close_segments;
+#endif
 	size_t (*segment_type_size)(void);
 } zend_shared_memory_handlers;
 
@@ -113,6 +120,14 @@ typedef struct _zend_smm_shared_globals {
     zend_shared_memory_state   shared_memory_state;
 	/* Pointer to the application's shared data structures */
 	void                      *app_shared_globals;
+#ifdef PHP_OPTIMIZER_MMAP_FILE
+	/* File descriptor */
+	int                        fd;
+	/* File name length */
+	size_t					   fl;
+	/* File name */
+	char					  *fn;
+#endif
 } zend_smm_shared_globals;
 
 extern zend_smm_shared_globals *smm_shared_globals;
@@ -145,6 +160,7 @@ typedef union _align_test {
 
 #define ZEND_ALIGNED_SIZE(size) \
 	((size + PLATFORM_ALIGNMENT - 1) & ~(PLATFORM_ALIGNMENT - 1))
+
 
 /* exclusive locking */
 void zend_shared_alloc_lock(TSRMLS_D);
