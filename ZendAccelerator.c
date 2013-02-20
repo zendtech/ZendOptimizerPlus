@@ -460,12 +460,13 @@ static inline void accel_restart_enter(TSRMLS_D)
 
 static inline void accel_restart_leave(TSRMLS_D)
 {
-	ZCSG(restart_in_progress) = 0;
 #ifdef ZEND_WIN32
+	ZCSG(restart_in_progress) = 0;
 	DECREMENT(restart_in);
 #else
 	static const FLOCK_STRUCTURE(restart_finished, F_UNLCK, SEEK_SET, 2, 1);
 
+	ZCSG(restart_in_progress) = 0;
 	if (fcntl(lock_file, F_SETLK, &restart_finished)==-1) {
 		zend_accel_error(ACCEL_LOG_DEBUG, "RestartC(-1):  %s (%d)", strerror(errno), errno);
 	}
@@ -1475,6 +1476,10 @@ static char *accel_tsrm_realpath(const char *path, int path_len TSRMLS_DC)
 	/* realpath("") returns CWD */
 	if (!*path) {
 		new_state.cwd = (char*)malloc(1);
+		if (!new_state.cwd) {
+			zend_accel_error(ACCEL_LOG_ERROR, "malloc() failed");
+			return NULL;
+		}
 		new_state.cwd[0] = '\0';
 		new_state.cwd_length = 0;
 	    if ((cwd = accel_getcwd(&cwd_len TSRMLS_CC)) != NULL) {
@@ -1483,9 +1488,17 @@ static char *accel_tsrm_realpath(const char *path, int path_len TSRMLS_DC)
 	} else if (!IS_ABSOLUTE_PATH(path, path_len) &&
 	    (cwd = accel_getcwd(&cwd_len TSRMLS_CC)) != NULL) {
 		new_state.cwd = zend_strndup(cwd, cwd_len);
+		if (!new_state.cwd) {
+			zend_accel_error(ACCEL_LOG_ERROR, "malloc() failed");
+			return NULL;
+		}
 		new_state.cwd_length = cwd_len;
 	} else {
 		new_state.cwd = (char*)malloc(1);
+		if (!new_state.cwd) {
+			zend_accel_error(ACCEL_LOG_ERROR, "malloc() failed");
+			return NULL;
+		}
 		new_state.cwd[0] = '\0';
 		new_state.cwd_length = 0;
 	}
@@ -1834,7 +1847,8 @@ static void accel_activate(void)
 	}
 
 	SHM_UNPROTECT();
-	ZCG(request_time) = sapi_get_request_time(TSRMLS_C);
+	/* PHP-5.4 and above return "double", but we use 1 sec precision */
+	ZCG(request_time) = (time_t)sapi_get_request_time(TSRMLS_C);
 	ZCG(cache_opline) = NULL;
 	ZCG(cache_persistent_script) = NULL;
 	ZCG(include_path_check) = !ZCG(include_path_key);
@@ -2169,6 +2183,7 @@ static void zend_accel_init_shm(TSRMLS_D)
 	accel_shared_globals = zend_shared_alloc(sizeof(zend_accel_shared_globals));
 	if (!accel_shared_globals) {
 		zend_accel_error(ACCEL_LOG_FATAL, "Insufficient shared memory!");
+		return;
 	}
 	ZSMMG(app_shared_globals) = accel_shared_globals;
 
@@ -2248,7 +2263,7 @@ static int accel_startup(zend_extension *extension)
 	_setmaxstdio(2048); /* The default configuration is limited to 512 stdio files */
 #endif
 
-	if (start_accel_module(0) == FAILURE) {
+	if (start_accel_module() == FAILURE) {
 		accel_startup_ok = 0;
 		zend_error(E_WARNING, ACCELERATOR_PRODUCT_NAME ": module registration failed!");
 		return FAILURE;

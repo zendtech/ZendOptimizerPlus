@@ -102,6 +102,10 @@ static char *get_mmap_base_file()
 void zend_shared_alloc_create_lock(void)
 {
 	memory_mutex = CreateMutex(NULL, FALSE, create_name_with_username(ACCEL_MUTEX_NAME));
+	if (!memory_mutex) {
+		zend_accel_error(ACCEL_LOG_FATAL, "Cannot create mutex");
+		return;
+	}
 	ReleaseMutex(memory_mutex);
 }
 
@@ -207,6 +211,11 @@ static int create_segments(size_t requested_size, zend_shared_segment ***shared_
 	/* creating segment here */
 	*shared_segments_count = 1;
 	*shared_segments_p = (zend_shared_segment **) calloc(1, sizeof(zend_shared_segment)+sizeof(void *));
+	if (!*shared_segments_p) {
+		zend_win_error_message(ACCEL_LOG_FATAL, "calloc() failed");
+		*error_in = "calloc";
+		return ALLOC_FAILURE;
+	}
 	shared_segment = (zend_shared_segment *)((char *)(*shared_segments_p) + sizeof(void *));
 	(*shared_segments_p)[0] = shared_segment;
 
