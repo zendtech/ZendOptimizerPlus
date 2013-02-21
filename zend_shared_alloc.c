@@ -48,6 +48,7 @@
 static HashTable xlat_table;
 static const zend_shared_memory_handlers *g_shared_alloc_handler = NULL;
 static const char *g_shared_model;
+
 /* pointer to globals allocated in SHM and shared across processes */
 zend_smm_shared_globals *smm_shared_globals;
 
@@ -188,8 +189,8 @@ int zend_shared_alloc_startup(int requested_size)
 	if( res == FAILED_REATTACHED ){
 		smm_shared_globals = NULL;
 		return res;
-	}
-
+	}	
+	
 	if(!g_shared_alloc_handler) {
 		/* try memory handlers in order */
 		for(he = handler_table; he->name; he++) {
@@ -248,7 +249,13 @@ void zend_shared_alloc_shutdown(void)
 	for(i=0; i<ZSMMG(shared_segments_count); i++) {
 		S_H(detach_segment)(ZSMMG(shared_segments)[i]);
 	}
+
+#ifdef PHP_OPTIMIZER_MMAP_FILE
+	S_H(close_segments)();
+#endif	
+		
 	efree(ZSMMG(shared_segments));
+
 	ZSMMG(shared_segments) = NULL;
 	g_shared_alloc_handler = NULL;
 #ifndef ZEND_WIN32
