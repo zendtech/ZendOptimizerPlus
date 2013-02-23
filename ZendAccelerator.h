@@ -37,6 +37,8 @@
 /* 8 - Standalone Open Source OptimizerPlus */
 #define ACCELERATOR_API_NO 8
 
+
+
 #if ZEND_WIN32
 # include "zend_config.w32.h"
 #else
@@ -55,6 +57,9 @@
 #include "Optimizer/zend_optimizer.h"
 #include "zend_accelerator_hash.h"
 #include "zend_accelerator_debug.h"
+
+extern zend_module_entry ZendOptimizerPlus_module_entry;
+#define phpext_ZendOptimizerPlus_ptr &ZendOptimizerPlus_module_entry
 
 #ifndef PHPAPI
 # ifdef ZEND_WIN32
@@ -241,6 +246,7 @@ typedef struct _zend_accel_globals {
 	int                     include_path_len; /* "include_path" string lenght */
 	int                     include_path_check;
 	time_t                  request_time;
+	long					max_cached_filesize;
 	/* preallocated shared-memory block to save current script */
 	void                   *mem;
 	/* cache to save hash lookup on the same INCLUDE opcode */

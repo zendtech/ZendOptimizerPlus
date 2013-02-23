@@ -689,30 +689,35 @@ static accel_time_t zend_get_file_handle_timestamp_win(zend_file_handle *file_ha
 	}
 	return 0;
 }
-#endif
 
-static accel_time_t zend_get_file_handle_timestamp(zend_file_handle *file_handle TSRMLS_DC)
+static accel_time_t zend_get_file_handle_size_win(zend_file_handle *file_handle)
 {
-	struct stat statbuf;
+	static unsigned __int64 utc_base = 0;
+	static FILETIME utc_base_ft;
+	WIN32_FILE_ATTRIBUTE_DATA fdata;
 
-#ifdef ZEND_WIN32
-	accel_time_t res;
-
-	res = zend_get_file_handle_timestamp_win(file_handle);
-	if (res) {
-		return res;
+	if (!file_handle->opened_path) {
+		return 0;
 	}
+
+	if (GetFileAttributesEx(file_handle->opened_path, GetFileExInfoStandard, &fdata) != 0) {
+		return (size_t) fdata.nFileSizeLow;
+	}
+	return 0;
+}
 #endif
 
+static int zend_get_file_statbuf(zend_file_handle *file_handle, struct stat *statbuf TSRMLS_DC)
+{
 	switch (file_handle->type) {
 		case ZEND_HANDLE_FD:
-			if (fstat(file_handle->handle.fd, &statbuf) == -1) {
+			if (fstat(file_handle->handle.fd, statbuf) == -1) {
 				return 0;
 			}
 			break;
 		case ZEND_HANDLE_FP:
-			if (fstat(fileno(file_handle->handle.fp), &statbuf) == -1) {
-				if (zend_get_stream_timestamp(file_handle->filename, &statbuf TSRMLS_CC) != SUCCESS) {
+			if (fstat(fileno(file_handle->handle.fp), statbuf) == -1) {
+				if (zend_get_stream_timestamp(file_handle->filename, statbuf TSRMLS_CC) != SUCCESS) {
 					return 0;
 				}
 			}
@@ -726,16 +731,16 @@ static accel_time_t zend_get_file_handle_timestamp(zend_file_handle *file_handle
 
 				if (file_path) {
 					if (is_stream_path(file_path)) {
-						if (zend_get_stream_timestamp(file_path, &statbuf TSRMLS_CC) == SUCCESS) {
+						if (zend_get_stream_timestamp(file_path, statbuf TSRMLS_CC) == SUCCESS) {
 							break;
 						}
 					}
-					if (VCWD_STAT(file_path, &statbuf) != -1) {
+					if (VCWD_STAT(file_path, statbuf) != -1) {
 						break;
 					}
 				}
 
-				if (zend_get_stream_timestamp(file_handle->filename, &statbuf TSRMLS_CC) != SUCCESS) {
+				if (zend_get_stream_timestamp(file_handle->filename, statbuf TSRMLS_CC) != SUCCESS) {
 					return 0;
 				}
 				break;
@@ -764,7 +769,7 @@ static accel_time_t zend_get_file_handle_timestamp(zend_file_handle *file_handle
 					return 0;
 				}
 
-				statbuf = sb.sb;
+				*statbuf = sb.sb;
 			}
 			break;
 
@@ -772,7 +777,41 @@ static accel_time_t zend_get_file_handle_timestamp(zend_file_handle *file_handle
 			return 0;
 	}
 
-	return statbuf.st_mtime;
+	return 1;
+}
+
+static size_t zend_get_file_handle_size(zend_file_handle *file_handle TSRMLS_DC)
+{
+	struct stat statbuf;
+
+#ifdef ZEND_WIN32
+	accel_time_t res;
+
+	res = zend_get_file_handle_timestamp_win(file_handle);
+	if (res) {
+		return res;
+	}
+#endif	
+
+	if (zend_get_file_statbuf(file_handle, &statbuf TSRMLS_CC)) {
+		return statbuf.st_size;
+	}
+	return 0;
+}
+
+static accel_time_t zend_get_file_handle_timestamp(zend_file_handle *file_handle TSRMLS_DC)
+{
+	struct stat statbuf;
+
+#ifdef ZEND_WIN32
+	return zend_get_file_handle_size_win(file_handle);
+#endif	
+
+	if (zend_get_file_statbuf(file_handle, &statbuf TSRMLS_CC)) {
+		return statbuf.st_mtime;
+	}
+
+	return 0;
 }
 
 static inline int do_validate_timestamps(zend_persistent_script *persistent_script, zend_file_handle *file_handle TSRMLS_DC)
@@ -1156,6 +1195,7 @@ static zend_persistent_script *compile_and_cache_file(zend_file_handle *file_han
 #if ZEND_EXTENSION_API_NO >= PHP_5_3_X_API_NO
 	zend_uint orig_compiler_options = 0;
 #endif
+	struct stat stbuf;
 
     /* Try to open file */
     if (file_handle->type == ZEND_HANDLE_FILENAME) {
@@ -1175,6 +1215,11 @@ static zend_persistent_script *compile_and_cache_file(zend_file_handle *file_han
 			return NULL;
     	}
     }
+
+    if (ZCG(max_cached_filesize) > 0 && zend_get_file_handle_size(file_handle TSRMLS_CC) >= ZCG(max_cached_filesize)) {
+		*op_array_p = accelerator_orig_compile_file(file_handle, type TSRMLS_CC);
+		return NULL;    
+	}
 
 	/* check blacklist right after ensuring that file was opened */
 	if (file_handle->opened_path && zend_accel_blacklist_is_blacklisted(&accel_blacklist, file_handle->opened_path)) {
