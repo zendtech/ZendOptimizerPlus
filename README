@@ -18,20 +18,18 @@ Quick Install
 
 - Compile
 
-export PHP_DIR=/usr/local/php5.5
-PHP_AUTOCONF=autoconf $PHP_DIR/bin/phpize
-./configure \
-      --enable-optimizer-plus \
+ $PHP_DIR/bin/phpize
+ ./configure \
       --with-php-config=$PHP_DIR/bin/php-config
-make
+ make
 
 - Install
 
-cp .libs/ZendOptimizerPlus.so $PHP_DIR/lib/ZendOptimizerPlus.so
+ make install # this will copy ZendOptimizerPlus.so into PHP extension directory
 
 - Edit php.ini
 
-zend_extension=/...full path.../ZendOptimizerPlus.so
+ zend_extension=/...full path.../ZendOptimizerPlus.so
 
 NOTE: In case you are going to use Zend Optimizer+ together with Xdebug,
 be sure that Xdebug is loaded after Optimizer+. "php -v" must show Xdebug
@@ -146,7 +144,7 @@ zend_optimizerplus.inherited_hack (default "1")
 	anymore and this setting has no effect.
 
 zend_optimizerplus.dups_fix (default "0")
-	Enable this hack as a workaround for "duplicate definition" errors.
+	Enable this hack as a workaround for "Cannot redeclare class" errors.
 
 zend_optimizerplus.blacklist_filename
 	The location of the Optimizer+ blacklist file.
