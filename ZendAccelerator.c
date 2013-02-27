@@ -742,7 +742,7 @@ static int zend_get_file_statbuf(zend_file_handle *file_handle, struct stat *sta
 					if (!strcmp(SG(request_info).path_translated, file_path)) {
 						struct stat *tmpbuf = sapi_get_stat(TSRMLS_C);
 						if (tmpbuf) {
-							memcpy(&statbuf, tmpbuf, sizeof(struct stat));
+							memcpy(statbuf, tmpbuf, sizeof(struct stat));
 							break;
 						}
 					}
