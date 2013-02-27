@@ -219,6 +219,8 @@ ZEND_INI_BEGIN()
 	STD_PHP_INI_ENTRY("zend_optimizerplus.preferred_memory_model", ""    , PHP_INI_SYSTEM, OnUpdateStringUnempty,        accel_directives.memory_model,              zend_accel_globals, accel_globals)
 	STD_PHP_INI_ENTRY("zend_optimizerplus.blacklist_filename"    , ""    , PHP_INI_SYSTEM, OnUpdateAccelBlacklist,	     accel_directives.user_blacklist_filename,   zend_accel_globals, accel_globals)
 
+	STD_PHP_INI_ENTRY("zend_optimizerplus.max_cached_filesize"   , "0"   , PHP_INI_SYSTEM, OnUpdateLong,		 		 max_cached_filesize,       				 zend_accel_globals, accel_globals)
+
 	STD_PHP_INI_ENTRY("zend_optimizerplus.protect_memory"        , "0"  , PHP_INI_SYSTEM, OnUpdateBool,                  accel_directives.protect_memory,            zend_accel_globals, accel_globals)
 	STD_PHP_INI_ENTRY("zend_optimizerplus.save_comments"         , "1"  , PHP_INI_SYSTEM, OnUpdateBool,                  accel_directives.save_comments,             zend_accel_globals, accel_globals)
 	STD_PHP_INI_ENTRY("zend_optimizerplus.load_comments"         , "1"  , PHP_INI_ALL,    OnUpdateBool,                  accel_directives.load_comments,             zend_accel_globals, accel_globals)
