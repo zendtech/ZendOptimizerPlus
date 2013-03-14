@@ -64,6 +64,12 @@
 # endif
 #endif
 
+extern zend_extension zend_extension_entry;
+extern zend_module_entry accel_module_entry;
+extern zend_bool accel_phpext_initialized;
+extern zend_bool accel_zendext_initialized;
+#define phpext_ZendOptimizerPlus_ptr &accel_module_entry
+
 #ifndef ZEND_EXT_API
 # if WIN32|WINNT
 #  define ZEND_EXT_API __declspec(dllexport)

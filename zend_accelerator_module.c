@@ -37,6 +37,10 @@
 #define MAX_ACCEL_FILES 100000
 #define TOKENTOSTR(X) #X
 
+/* true globals, no need for thread safety */
+zend_bool accel_phpext_initialized = 0;
+zend_bool accel_phpext_via_dso = 0;
+
 /* User functions */
 static ZEND_FUNCTION(accelerator_reset);
 
@@ -255,6 +259,19 @@ static int ZEND_DECLARE_INHERITED_CLASS_DELAYED_HANDLER(ZEND_OPCODE_HANDLER_ARGS
 }
 #endif
 
+static void accel_globals_ctor(zend_accel_globals *accel_globals TSRMLS_DC)
+{
+	memset(accel_globals, 0, sizeof(zend_accel_globals));
+	zend_hash_init(&accel_globals->function_table, zend_hash_num_elements(CG(function_table)), NULL, ZEND_FUNCTION_DTOR, 1);
+	zend_accel_copy_internal_functions(TSRMLS_C);
+}
+
+static void accel_globals_dtor(zend_accel_globals *accel_globals TSRMLS_DC)
+{
+	accel_globals->function_table.pDestructor = NULL;
+	zend_hash_destroy(&accel_globals->function_table);
+}
+
 static int filename_is_in_cache(char *filename, int filename_len TSRMLS_DC)
 {
 	char *key;
@@ -326,9 +343,27 @@ static void accel_is_readable(INTERNAL_FUNCTION_PARAMETERS)
 	accel_file_in_cache(FS_IS_R, INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
+static void accel_register_zend_extension(zend_extension *extension)
+{
+#if ZEND_EXTENSIONS_SUPPORT
+	zend_extension_dispatch_message(ZEND_EXTMSG_NEW_EXTENSION, extension);
+
+	zend_llist_add_element(&zend_extensions, extension);
+#endif
+}
+
 static ZEND_MINIT_FUNCTION(zend_accelerator)
 {
-	(void)type; /* keep the compiler happy */
+#ifdef ZTS
+	accel_globals_id = ts_allocate_id(&accel_globals_id, sizeof(zend_accel_globals), (ts_allocate_ctor) accel_globals_ctor, (ts_allocate_dtor) accel_globals_dtor);
+#else
+	accel_globals_ctor(&accel_globals);
+#endif
+
+	if (!accel_zendext_initialized && !accel_phpext_via_dso) {
+	    accel_phpext_initialized = 1;
+		accel_register_zend_extension(&zend_extension_entry);
+	}
 
 	/* must be 0 before the ini entry OnUpdate function is called */
 	accel_blacklist.entries = NULL;
@@ -361,6 +396,12 @@ static ZEND_MSHUTDOWN_FUNCTION(zend_accelerator)
 {
 	(void)type; /* keep the compiler happy */
 
+#ifndef ZTS
+	accel_globals_dtor(&accel_globals);
+#else
+	ts_free_id(accel_globals_id);
+#endif
+
 	UNREGISTER_INI_ENTRIES();
 	return SUCCESS;
 }
@@ -392,7 +433,19 @@ void zend_accel_info(ZEND_MODULE_INFO_FUNC_ARGS)
 	DISPLAY_INI_ENTRIES();
 }
 
-static zend_module_entry accel_module_entry = {
+#ifdef COMPILE_DL_ZENDOPTIMIZERPLUS
+BEGIN_EXTERN_C()
+ZEND_DLEXPORT zend_module_entry *get_module(void)
+{ 
+	accel_phpext_via_dso = 1;
+	zend_error(E_WARNING, ACCELERATOR_PRODUCT_NAME ": MUST be loaded as a Zend extension");
+	return &accel_module_entry;
+}
+END_EXTERN_C()
+#endif
+/* }}} */
+
+zend_module_entry accel_module_entry = {
 	STANDARD_MODULE_HEADER,
 	ACCELERATOR_PRODUCT_NAME,
 	accel_functions,

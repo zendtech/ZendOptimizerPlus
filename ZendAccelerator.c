@@ -99,6 +99,7 @@ zend_accel_shared_globals *accel_shared_globals = NULL;
 
 /* true globals, no need for thread safety */
 zend_bool accel_startup_ok = 0;
+zend_bool accel_zendext_initialized = 0;
 static char *zps_failure_reason = NULL;
 char *zps_api_failure_reason = NULL;
 
@@ -675,14 +676,14 @@ static accel_time_t zend_get_file_handle_timestamp_win(zend_file_handle *file_ha
 		st.wSecond = 0;
 		st.wMilliseconds = 0;
 
-		SystemTimeToFileTime (&st, &utc_base_ft);
+		SystemTimeToFileTime(&st, &utc_base_ft);
 		utc_base = (((unsigned __int64)utc_base_ft.dwHighDateTime) << 32) + utc_base_ft.dwLowDateTime;
     }
 
 	if (GetFileAttributesEx(file_handle->opened_path, GetFileExInfoStandard, &fdata) != 0) {
 		unsigned __int64 ftime;
 
-		if (CompareFileTime (&fdata.ftLastWriteTime, &utc_base_ft) < 0) {
+		if (CompareFileTime(&fdata.ftLastWriteTime, &utc_base_ft) < 0) {
 			return 0;
 		}
 
@@ -2319,39 +2320,23 @@ static void zend_accel_init_shm(TSRMLS_D)
 	zend_shared_alloc_unlock(TSRMLS_C);
 }
 
-static void accel_globals_ctor(zend_accel_globals *accel_globals TSRMLS_DC)
-{
-	memset(accel_globals, 0, sizeof(zend_accel_globals));
-	zend_hash_init(&accel_globals->function_table, zend_hash_num_elements(CG(function_table)), NULL, ZEND_FUNCTION_DTOR, 1);
-	zend_accel_copy_internal_functions(TSRMLS_C);
-}
-
-static void accel_globals_dtor(zend_accel_globals *accel_globals TSRMLS_DC)
-{
-	accel_globals->function_table.pDestructor = NULL;
-	zend_hash_destroy(&accel_globals->function_table);
-}
-
 static int accel_startup(zend_extension *extension)
 {
 	zend_function *func;
 	zend_ini_entry *ini_entry;
 	TSRMLS_FETCH();
 
-#ifdef ZTS
-	accel_globals_id = ts_allocate_id(&accel_globals_id, sizeof(zend_accel_globals), (ts_allocate_ctor) accel_globals_ctor, (ts_allocate_dtor) accel_globals_dtor);
-#else
-	accel_globals_ctor(&accel_globals);
-#endif
-
 #ifdef ZEND_WIN32
 	_setmaxstdio(2048); /* The default configuration is limited to 512 stdio files */
 #endif
 
-	if (start_accel_module() == FAILURE) {
-		accel_startup_ok = 0;
-		zend_error(E_WARNING, ACCELERATOR_PRODUCT_NAME ": module registration failed!");
-		return FAILURE;
+	if (!accel_phpext_initialized) {
+		accel_zendext_initialized = 1;
+		if (start_accel_module() == FAILURE) {
+			accel_startup_ok = 0;
+			zend_error(E_WARNING, ACCELERATOR_PRODUCT_NAME ": module registration failed!");
+			return FAILURE;
+		}
 	}
 
 	/* no supported SAPI found - disable acceleration and stop initialization */
@@ -2487,15 +2472,6 @@ static int accel_startup(zend_extension *extension)
 	return SUCCESS;
 }
 
-static void accel_free_ts_resources()
-{
-#ifndef ZTS
-	accel_globals_dtor(&accel_globals);
-#else
-	ts_free_id(accel_globals_id);
-#endif
-}
-
 static void accel_shutdown(zend_extension *extension)
 {
 	zend_ini_entry *ini_entry;
@@ -2506,11 +2482,9 @@ static void accel_shutdown(zend_extension *extension)
 	zend_accel_blacklist_shutdown(&accel_blacklist);
 
 	if (!ZCG(enabled) || !accel_startup_ok) {
-		accel_free_ts_resources();
 		return;
 	}
 
-	accel_free_ts_resources();
 	zend_shared_alloc_shutdown();
 	zend_compile_file = accelerator_orig_compile_file;
 
