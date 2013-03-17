@@ -473,6 +473,9 @@ static ZEND_FUNCTION(opcache_get_status)
 	add_assoc_long(statistics, "max_cached_keys",    ZCSG(hash).max_num_entries);
 	add_assoc_long(statistics, "hits", ZCSG(hits));
 	add_assoc_long(statistics, "last_restart_time", ZCSG(last_restart_time));
+	add_assoc_long(statistics, "oom_restarts", ZCSG(oom_restarts));
+	add_assoc_long(statistics, "hash_restarts", ZCSG(hash_restarts));
+	add_assoc_long(statistics, "manual_restarts", ZCSG(manual_restarts));
 	add_assoc_long(statistics, "misses", ZSMMG(memory_exhausted)?ZCSG(misses):ZCSG(misses)-ZCSG(blacklist_misses));
 	add_assoc_long(statistics, "blacklist_misses", ZCSG(blacklist_misses));
 	reqs = ZCSG(hits)+ZCSG(misses);
@@ -576,6 +579,7 @@ static ZEND_FUNCTION(opcache_reset)
 		RETURN_FALSE;
 	}
 
+	ZCSG(manual_restarts)++;
 	zend_accel_schedule_restart(TSRMLS_C);
 	RETURN_TRUE;
 }
