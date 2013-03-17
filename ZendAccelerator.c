@@ -852,6 +852,7 @@ static void zend_accel_schedule_restart_if_necessary(TSRMLS_D)
 {
 	if ((((double) ZSMMG(wasted_shared_memory)) / ZCG(accel_directives).memory_consumption) >= ZCG(accel_directives).max_wasted_percentage) {
 	    ZSMMG(memory_exhausted) = 1;
+		ZCSG(oom_restarts)++;
  		zend_accel_schedule_restart(TSRMLS_C);
 	}
 }
@@ -1030,6 +1031,7 @@ static void zend_accel_add_key(char *key, unsigned int key_length, zend_accel_ha
 		if (zend_accel_hash_is_full(&ZCSG(hash))) {
 			zend_accel_error(ACCEL_LOG_DEBUG, "No more entries in hash table!");
 			ZSMMG(memory_exhausted) = 1;
+			ZCSG(hash_restarts)++;
 			zend_accel_schedule_restart(TSRMLS_C);
 		} else {
 			char *new_key = zend_shared_alloc(key_length + 1);
@@ -1057,6 +1059,7 @@ static zend_persistent_script *cache_script_in_shared_memory(zend_persistent_scr
 	if (zend_accel_hash_is_full(&ZCSG(hash))) {
 		zend_accel_error(ACCEL_LOG_DEBUG, "No more entries in hash table!");
 		ZSMMG(memory_exhausted) = 1;
+		ZCSG(hash_restarts)++;
 		zend_accel_schedule_restart(TSRMLS_C);
 		zend_shared_alloc_unlock(TSRMLS_C);
 		return new_persistent_script;
@@ -1118,6 +1121,7 @@ static zend_persistent_script *cache_script_in_shared_memory(zend_persistent_scr
 		if (!zend_accel_hash_update(&ZCSG(hash), key, key_length + 1, 1, bucket)) {
 			zend_accel_error(ACCEL_LOG_DEBUG, "No more entries in hash table!");
 			ZSMMG(memory_exhausted) = 1;
+			ZCSG(hash_restarts)++;
 			zend_accel_schedule_restart(TSRMLS_C);
 		}
 	}
@@ -1931,6 +1935,9 @@ static void zend_reset_cache_vars(TSRMLS_D)
 	ZSMMG(wasted_shared_memory) = 0;
 	ZCSG(restart_pending) = 0;
 	ZCSG(force_restart_time) = 0;
+	ZCSG(oom_restarts) = 0;
+	ZCSG(hash_restarts) = 0;
+	ZCSG(manual_restarts) = 0;
 }
 
 static void accel_activate(void)

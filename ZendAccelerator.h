@@ -259,6 +259,9 @@ typedef struct _zend_accel_shared_globals {
 	unsigned long   hits;
 	unsigned long   misses;
 	unsigned long   blacklist_misses;
+	unsigned long   oom_restarts;
+	unsigned long   hash_restarts;
+	unsigned long   manual_restarts;
 	zend_accel_hash hash;             /* hash table for cached scripts */
 	zend_accel_hash include_paths;    /* used "include_path" values    */
 
