@@ -277,6 +277,7 @@ static size_t zend_shared_alloc_get_largest_free_block(void)
 		zend_accel_error(ACCEL_LOG_WARNING, "Not enough free shared space to allocate %ld bytes (%ld bytes free)", (long)size, (long)ZSMMG(shared_free)); \
 		if (zend_shared_alloc_get_largest_free_block() < MIN_FREE_MEMORY) { \
 			ZSMMG(memory_exhausted) = 1;			\
+			ZCSG(oom_restarts)++; \
 			zend_accel_schedule_restart(TSRMLS_C);	\
 		} \
 	} while (0)
