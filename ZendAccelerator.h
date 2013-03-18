@@ -26,7 +26,7 @@
 # include <config.h>
 #endif
 
-#define ACCELERATOR_PRODUCT_NAME	"Zend Optimizer+"
+#define ACCELERATOR_PRODUCT_NAME	"OPcache"
 #define ACCELERATOR_VERSION "7.0.1-dev"
 /* 2 - added Profiler support, on 20010712 */
 /* 3 - added support for Optimizer's encoded-only-files mode */
