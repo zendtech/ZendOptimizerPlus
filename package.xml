@@ -5,11 +5,11 @@
  xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" 
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
  xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
- <name>zendoptimizerplus</name>
+ <name>zendopcache</name>
  <channel>pecl.php.net</channel>
- <summary>The Zend Optimizer+ provides faster PHP execution through opcode caching and optimization.</summary>
+ <summary>The Zend OPcache provides faster PHP execution through opcode caching and optimization.</summary>
  <description>
-  The Zend Optimizer+ provides faster PHP execution through opcode caching and
+  The Zend OPcache provides faster PHP execution through opcode caching and
   optimization. It improves PHP performance by storing precompiled script
   bytecode in the shared memory. This eliminates the stages of reading code from
   the disk and compiling it on future access. In addition, it applies a few
@@ -112,7 +112,7 @@
    </pearinstaller>
   </required>
  </dependencies>
- <providesextension>zendoptimizerplus</providesextension>
+ <providesextension>zendopcache</providesextension>
  <zendextsrcrelease />
  <changelog>
   <release>

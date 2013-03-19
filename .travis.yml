@@ -11,4 +11,4 @@ before_script:
   - make
 
 script:
-  - php -d zend_extension=`pwd`/modules/opcache.so -m | grep "Zend Optimizer+"
+  - php -d zend_extension=`pwd`/modules/opcache.so -m | grep "Zend OPcache"
