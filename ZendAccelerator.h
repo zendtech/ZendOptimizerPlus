@@ -27,7 +27,7 @@
 #endif
 
 #define ACCELERATOR_PRODUCT_NAME	"Zend OPcache"
-#define ACCELERATOR_VERSION "7.0.1-dev"
+#define ACCELERATOR_VERSION "7.0.1"
 /* 2 - added Profiler support, on 20010712 */
 /* 3 - added support for Optimizer's encoded-only-files mode */
 /* 4 - works with the new Optimizer, that supports the file format with licenses */
@@ -88,12 +88,13 @@
 #define PHP_5_2_X_API_NO		220060519
 #define PHP_5_3_X_API_NO		220090626
 #define PHP_5_4_X_API_NO		220100525
+#define PHP_5_5_X_API_NO		220121212
 
 /*** file locking ***/
 #ifndef ZEND_WIN32
 extern int lock_file;
 
-# if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__)/* Darwin */) || defined(__OpenBSD__) || defined(__NetBSD__)
+# if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || (defined(__APPLE__) && defined(__MACH__)/* Darwin */) || defined(__OpenBSD__) || defined(__NetBSD__)
 #  define FLOCK_STRUCTURE(name, type, whence, start, len) \
 		struct flock name = {start, len, -1, type, whence}
 # elif defined(__svr4__)
