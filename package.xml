@@ -39,11 +39,11 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2013-03-04</date>
- <time>19:40:00</time>
+ <date>2013-03-25</date>
+ <time>16:01:30</time>
  <version>
-  <release>7.0.0</release>
-  <api>7.0.0</api>
+  <release>7.0.1</release>
+  <api>7.0.1</api>
  </version>
  <stability>
   <release>beta</release>
@@ -51,7 +51,15 @@
  </stability>
  <license uri="http://www.php.net/license">PHP License</license>
  <notes>
-  - Initial release
+  - Fix Bug #64490 (add __FreeBSD_kernel__ to allowed FreeBSD defs)
+  - Fixed bug #64353 (Built-in classes can be unavailable with dynamic includes and Optimizer+)
+  - Fixed compatibility with ext/phar
+  - Fixed issue #58 (PHP-5.2 compatibility)
+  - Fixed Issue #57 (segfaults in drupal7)
+  - Fixed Issue #54 (PECL install adds extension= instead of zend_extension= to php.ini)-iii
+  - Allows exclusion of large files from being cached
+  - Save a stat() call by calling sapi_module.get_stat()
+  - Add optional flag to opcache_get_status()
  </notes>
  <contents>
   <dir name="/">
@@ -115,6 +123,30 @@
  <providesextension>zendopcache</providesextension>
  <zendextsrcrelease />
  <changelog>
+  <release>
+   <version>
+    <release>7.0.1</release>
+    <api>7.0.1</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <date>2013-03-25</date>
+   <license uri="http://www.php.net/license">PHP License</license>
+   <notes>
+	- Fix Bug #64490 (add __FreeBSD_kernel__ to allowed FreeBSD defs)
+	- Fixed bug #64353 (Built-in classes can be unavailable with dynamic includes and Optimizer+)
+	- Fixed compatibility with ext/phar
+	- Fixed issue #58 (PHP-5.2 compatibility)
+	- Fixed Issue #57 (segfaults in drupal7)
+	- Fixed Issue #54 (PECL install adds extension= instead of zend_extension= to php.ini)-iii
+	- Allows exclusion of large files from being cached
+	- Save a stat() call by calling sapi_module.get_stat()
+	- Add optional flag to opcache_get_status()
+   </notes>
+  </release>
+
   <release>
    <version>
     <release>7.0.0</release>
