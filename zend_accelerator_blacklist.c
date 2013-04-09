@@ -269,6 +269,7 @@ void zend_accel_blacklist_load(zend_blacklist *blacklist, char *filename)
 		for(i=0 ; i<globbuf.gl_pathc; i++) {
 			zend_accel_blacklist_loadone(blacklist, globbuf.gl_pathv[i]);
 		}
+		globfree(&globbuf);
 	}
 }
 #endif
