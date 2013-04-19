@@ -18,7 +18,12 @@ then
 			export TEST_PHP_ARGS="-d zend_extension_debug=`pwd`/modules/opcache.so"
 		fi
 	else
-		export TEST_PHP_ARGS="-d zend_extension=`pwd`/modules/opcache.so"
+		if [ $php_zts -eq 1 ]
+		then
+			export TEST_PHP_ARGS="-d zend_extension_ts=`pwd`/modules/opcache.so"
+		else
+			export TEST_PHP_ARGS="-d zend_extension=`pwd`/modules/opcache.so"
+		fi
 	fi
 else
 	export TEST_PHP_ARGS="-d zend_extension=`pwd`/modules/opcache.so"
