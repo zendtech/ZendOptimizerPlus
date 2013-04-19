@@ -8,6 +8,7 @@ php:
 before_script:
   - phpize
   - ./configure --enable-opcache
+  - make clean
   - make
 
 script:
