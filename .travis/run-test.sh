@@ -1,14 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 PHP_VERSION=`php-config --vernum`
-php-config --configure-options | grep "enable-debug" >/dev/null
-php_debug=$?
-php_zts=`php -r "echo PHP_ZTS;"`
-TEST_DIR="`pwd`/tests"
-
 export TEST_PHP_EXECUTABLE=`which php`
+TEST_DIR="`pwd`/tests"
 
 if [ $PHP_VERSION -lt 50300 ] 
 then
+	php-config --configure-options | grep "enable-debug" >/dev/null
+	php_debug=$?
+	php_zts=`php -r "echo PHP_ZTS;"`
 	if [ $php_debug -eq 0 ]
 	then
 		if [ $php_zts -eq 1 ]
