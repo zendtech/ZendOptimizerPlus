@@ -7,8 +7,9 @@ php:
 
 before_script:
   - phpize
-  - ./configure --enable-optimizer-plus
+  - ./configure --enable-opcache
+  - make clean
   - make
 
 script:
-  - php -d zend_extension=`pwd`/modules/ZendOptimizerPlus.so -m | grep "Zend Optimizer+"
+  - .travis/run-test.sh

@@ -1,6 +1,6 @@
 /*
    +----------------------------------------------------------------------+
-   | Zend Optimizer+                                                      |
+   | Zend OPcache                                                         |
    +----------------------------------------------------------------------+
    | Copyright (c) 1998-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
@@ -54,7 +54,7 @@ typedef struct  {
 static int create_segments(size_t requested_size, zend_shared_segment_shm ***shared_segments_p, int *shared_segments_count, char **error_in)
 {
 	int i;
-	unsigned int allocate_size = 0, remaining_bytes = requested_size, seg_allocate_size;
+	size_t allocate_size = 0, remaining_bytes = requested_size, seg_allocate_size;
 	int first_segment_id = -1;
 	key_t first_segment_key = -1;
 	struct shmid_ds sds;
@@ -111,7 +111,7 @@ static int create_segments(size_t requested_size, zend_shared_segment_shm ***sha
 		}
 
 		shared_segments[i].common.p = shmat(shared_segments[i].shm_id, NULL, 0);
-		if (((int) shared_segments[i].common.p) == -1) {
+		if (shared_segments[i].common.p == (void *)-1) {
 			*error_in = "shmat";
 			shmctl(shared_segments[i].shm_id, IPC_RMID, &sds);
 			return ALLOC_FAILURE;

@@ -5,11 +5,11 @@
  xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" 
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
  xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
- <name>zendoptimizerplus</name>
+ <name>zendopcache</name>
  <channel>pecl.php.net</channel>
- <summary>The Zend Optimizer+ provides faster PHP execution through opcode caching and optimization.</summary>
+ <summary>The Zend OPcache provides faster PHP execution through opcode caching and optimization.</summary>
  <description>
-  The Zend Optimizer+ provides faster PHP execution through opcode caching and
+  The Zend OPcache provides faster PHP execution through opcode caching and
   optimization. It improves PHP performance by storing precompiled script
   bytecode in the shared memory. This eliminates the stages of reading code from
   the disk and compiling it on future access. In addition, it applies a few
@@ -39,11 +39,11 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2013-03-04</date>
- <time>19:40:00</time>
+ <date>2013-06-05</date>
+ <time>14:17:40</time>
  <version>
-  <release>7.0.0</release>
-  <api>7.0.0</api>
+  <release>7.0.2</release>
+  <api>7.0.2</api>
  </version>
  <stability>
   <release>beta</release>
@@ -51,7 +51,16 @@
  </stability>
  <license uri="http://www.php.net/license">PHP License</license>
  <notes>
-  - Initial release
+  - Fixed issue #26 (added opcache_invalidate(string $filename [, bool $force = false]) function)
+  - Fixed issue #74 (Allowed per request OPcache disabling)
+  - Fixed issue #76 (actually we don't need zend_shared_meory_block_header at all)
+  - Fixed issue #78 (incorrect file path validation)
+  - Fixed issue #79 (Optimization Problem/Bug)
+  - Fixed issue #82 (allow comments in blacklist file, lines started with ";")
+  - Fixed issue #91 (fix x64 fixed addresses)
+  - Fxied issue #92 (Compilation warnings)
+  - Fixed issue #97 (Use size_t instead of int to support a cache larger than 2G)
+  - Fixed bug (Avoid possible conditional jump depended on uninitialised value)
  </notes>
  <contents>
   <dir name="/">
@@ -98,7 +107,13 @@
     <file role="src" name="001_cli.phpt"/>
     <file role="src" name="skipif.inc"/>
     <file role="src" name="bug64353.phpt"/>
+    <file role="src" name="bug64482.phpt"/>
+    <file role="src" name="bug64482.inc"/>
     <file role="src" name="issue0057.phpt"/>
+	<file role="src" name="issue0079.phpt"/>
+	<file role="src" name="blacklist.phpt"/>
+	<file role="src" name="opcache-1.blacklist"/>
+	<file role="src" name="opcache-2.blacklist"/>
    </dir> <!-- tests -->
   </dir> <!-- / -->
  </contents>
@@ -112,9 +127,60 @@
    </pearinstaller>
   </required>
  </dependencies>
- <providesextension>zendoptimizerplus</providesextension>
+ <providesextension>zendopcache</providesextension>
  <zendextsrcrelease />
  <changelog>
+  <release>
+   <version>
+    <release>7.0.1</release>
+    <api>7.0.1</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <date>2013-03-25</date>
+   <license uri="http://www.php.net/license">PHP License</license>
+   <notes>
+	- Fixed Bug #64490 (add __FreeBSD_kernel__ to allowed FreeBSD defs)
+	- Fixed Bug #64482 (Opcodes for dynamic includes should not be cached)
+	- Fixed Bug #64353 (Built-in classes can be unavailable with dynamic includes and Optimizer+)
+	- Fixed compatibility with ext/phar
+	- Fixed Issue #58 (PHP-5.2 compatibility)
+	- Fixed Issue #57 (segfaults in drupal7)
+	- Fixed Issue #54 (PECL install adds extension= instead of zend_extension= to php.ini)-iii
+	- Allows exclusion of large files from being cached
+	- Save a stat() call by calling sapi_module.get_stat()
+	- Add optional flag to opcache_get_status()
+	- Separate "start_time" from "last_restart_time"
+   </notes>
+  </release>
+
+  <release>
+   <version>
+    <release>7.0.1</release>
+    <api>7.0.1</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <date>2013-03-25</date>
+   <license uri="http://www.php.net/license">PHP License</license>
+   <notes>
+	- Fixed Bug #64490 (add __FreeBSD_kernel__ to allowed FreeBSD defs)
+	- Fixed Bug #64482 (Opcodes for dynamic includes should not be cached)
+	- Fixed Bug #64353 (Built-in classes can be unavailable with dynamic includes and Optimizer+)
+	- Fixed compatibility with ext/phar
+	- Fixed Issue #58 (PHP-5.2 compatibility)
+	- Fixed Issue #57 (segfaults in drupal7)
+	- Fixed Issue #54 (PECL install adds extension= instead of zend_extension= to php.ini)-iii
+	- Allows exclusion of large files from being cached
+	- Save a stat() call by calling sapi_module.get_stat()
+	- Add optional flag to opcache_get_status()
+	- Separate "start_time" from "last_restart_time"
+   </notes>
+  </release>
   <release>
    <version>
     <release>7.0.0</release>

@@ -1,6 +1,6 @@
 /*
    +----------------------------------------------------------------------+
-   | Zend Optimizer+                                                      |
+   | Zend OPcache                                                         |
    +----------------------------------------------------------------------+
    | Copyright (c) 1998-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
@@ -89,10 +89,6 @@ typedef struct _handler_entry {
 	zend_shared_memory_handlers *handler;
 } zend_shared_memory_handler_entry;
 
-typedef struct _zend_shared_memory_block_header {
-	int size;
-} zend_shared_memory_block_header;
-
 typedef struct _zend_shared_memory_state {
 	int *positions;   /* current positions for each segment */
 	int  shared_free; /* amount of free shared memory */
@@ -121,7 +117,7 @@ extern zend_smm_shared_globals *smm_shared_globals;
 
 #define SHARED_ALLOC_REATTACHED		(SUCCESS+1)
 
-int zend_shared_alloc_startup(int requested_size);
+int zend_shared_alloc_startup(size_t requested_size);
 void zend_shared_alloc_shutdown(void);
 
 /* allocate shared memory block */
@@ -159,7 +155,6 @@ void *zend_shared_alloc_get_xlat_entry(const void *old);
 size_t zend_shared_alloc_get_free_memory(void);
 void zend_shared_alloc_save_state(void);
 void zend_shared_alloc_restore_state(void);
-size_t zend_shared_alloc_get_largest_free_block(void);
 const char *zend_accel_get_shared_model(void);
 
 /* memory write protection */
