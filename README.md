@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/zendtech/ZendOptimizerPlus.png?branch=master)](https://travis-ci.org/zendtech/ZendOptimizerPlus)
+
 The Zend OPcache
 ================
 
@@ -10,7 +12,7 @@ bytecode optimization patterns that make code execution faster.
 Compatibility
 -------------
 
-This version of Zend OPcache is compatible with PHP 5.2.*, 5.3.*, 5.4.*
+This version of Zend OPcache is compatible with PHP 5.2, 5.3, 5.4
 and PHP-5.5 development branch.  PHP 5.2 support may be removed in the future.
 
 Quick Install
@@ -18,21 +20,25 @@ Quick Install
 
 - Compile
 
- $PHP_DIR/bin/phpize
- ./configure \
-      --with-php-config=$PHP_DIR/bin/php-config
- make
+```
+$PHP_DIR/bin/phpize
+./configure --with-php-config=$PHP_DIR/bin/php-config
+make
+```
 
 - Install
 
- make install # this will copy opcache.so into PHP extension directory
+```
+make install # this will copy opcache.so into PHP extension directory
+```
 
 - Edit php.ini
 
- zend_extension=/...full path.../opcache.so
-
+```
+zend_extension=/...full path.../opcache.so
+```
 NOTE: In case you are going to use Zend OPcache together with Xdebug,
-be sure that Xdebug is loaded after OPcache. "php -v" must show Xdebug
+be sure that Xdebug is loaded after OPcache. `php -v` must show Xdebug
 after OPcache.
 
 - Restart PHP
@@ -42,19 +48,23 @@ Speed Tuning
 
 We recommend the following configuration options for best performance.
 
+```
 opcache.memory_consumption=128
 opcache.interned_strings_buffer=8
 opcache.max_accelerated_files=4000
 opcache.revalidate_freq=60
 opcache.fast_shutdown=1
 opcache.enable_cli=1
+```
 
 You also may add the following, but it may break some applications and
 frameworks. Please, read description of these directives and add them on your
 own risk.
 
+```
 opcache.save_comments=0
 opcache.enable_file_override=1
+```
 
 In some cases you may like to prefer enabling/disabling some features
 to avoid incompatibilities at the cost of some performance degradation.
@@ -62,6 +72,7 @@ to avoid incompatibilities at the cost of some performance degradation.
 Configuration Directives
 ------------------------
 
+```
 opcache.enable (default "1")
 	OPcache On/Off switch. When set to Off, code is not optimized and cached.
 
@@ -204,3 +215,4 @@ opcache.mmap_base
 	processes have to map shared memory into the same address space. This
 	directive allows to manually fix the "Unable to reattach to base address"
 	errors.
+```
