@@ -2163,7 +2163,12 @@ static void accel_fast_zval_ptr_dtor(zval **zval_ptr)
 			case IS_CONSTANT_ARRAY: {
 					TSRMLS_FETCH();
 
+#if ZEND_EXTENSION_API_NO >= PHP_5_3_X_API_NO
+					GC_REMOVE_ZVAL_FROM_BUFFER(zvalue);
+#endif
 					if (zvalue->value.ht && (zvalue->value.ht != &EG(symbol_table))) {
+						/* break possible cycles */
+						Z_TYPE_P(zvalue) = IS_NULL;
 						zvalue->value.ht->pDestructor = (dtor_func_t)accel_fast_zval_ptr_dtor;
 						accel_fast_hash_destroy(zvalue->value.ht);
 					}
@@ -2173,6 +2178,9 @@ static void accel_fast_zval_ptr_dtor(zval **zval_ptr)
 				{
 					TSRMLS_FETCH();
 
+#if ZEND_EXTENSION_API_NO >= PHP_5_3_X_API_NO
+					GC_REMOVE_ZVAL_FROM_BUFFER(zvalue);
+#endif
 					Z_OBJ_HT_P(zvalue)->del_ref(zvalue TSRMLS_CC);
 				}
 				break;
