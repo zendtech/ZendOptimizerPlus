@@ -22,6 +22,7 @@
 #include "main/php.h"
 #include "main/fopen_wrappers.h"
 #include "ZendAccelerator.h"
+#include "zend_compile.h"
 #include "zend_accelerator_blacklist.h"
 
 #if ZEND_EXTENSION_API_NO >= PHP_5_3_X_API_NO
@@ -86,9 +87,10 @@ static void blacklist_report_regexp_error(regex_t *comp_regex, int reg_err)
 
 static void zend_accel_blacklist_update_regexp(zend_blacklist *blacklist)
 {
-	char *regexp;
-	int i, j, clen, reg_err, end = 0, rlen = 6;
+	int i, left;
 	zend_regexp_list **regexp_list_it, *it;
+	zend_blacklist_entry *entry, *last_entry;
+	char regexp[11*1024+MAXPATHLEN], *p, *last;
 
 	if (blacklist->pos == 0) {
 		/* we have no blacklist to talk about */
@@ -96,53 +98,105 @@ static void zend_accel_blacklist_update_regexp(zend_blacklist *blacklist)
 	}
 
 	regexp_list_it = &(blacklist->regexp_list);
-	for (i = 0; i < blacklist->pos; i++) {
-		rlen += blacklist->entries[i].path_length * 2 + 2;
 
-		/* don't create a regexp buffer bigger than 12K)*/
-		if ((i + 1 == blacklist->pos) || ((rlen + blacklist->entries[i + 1].path_length * 2 + 2) > (12 * 1024))) {
-			regexp = (char *)malloc(rlen);
-			if (!regexp) {
-				zend_accel_error(ACCEL_LOG_ERROR, "malloc() failed\n");
-				return;
+	regexp[0] = '^';
+	regexp[1] = '(';
+	
+	p    = regexp         + 2;
+	left = sizeof(regexp) - 2;
+
+	/* Note the entries are < MAXPATHLEN so at least one is guaranteed to fit */
+	for (entry = blacklist->entries; entry <= last_entry; ) {
+		int i_max = entry->path_length;
+		last = p;
+
+		/* process entry as long as enough space is left to process next char */
+		for (i = 0; i < i_max && left > sizeof("[^\\\\]*) "); i++) {
+			char c = entry->path[i];
+			/* bypass the strchr call for lc letters e.g. ~90% of chars */
+			if ((c >= 'a' && c <= 'z') || !strchr("$()*+.?[\\]^{|}", c)) {
+				*p++ = c;
+				left--;
+
+			} else {
+				switch (c) {
+					case '?':							/* ? => . */
+					 	*p++ = '.';
+						left--;
+						break;
+
+					case '*':							/* ** => .* */
+						if (entry->path[i+1] == '*') {
+						 	p[0]  = '.';
+						 	p[1]  = '*';
+							p    += 2;
+							left -= 2;
+							i++;
+						} else {
+#ifdef ZEND_WIN32
+						 	p[0]  = '[';				/* * => [^\\]* on Win32 */
+						 	p[1]  = '^';
+						 	p[2]  = '\\';
+						 	p[3]  = '\\';
+						 	p[4]  = ']';
+						 	p[5]  = '*';
+							p    += 6;
+							left -= 6;
+#else
+						 	p[0]  = '[';                /* * => [^/]* on *nix */
+						 	p[1]  = '^';
+						 	p[2]  = '/';
+						 	p[3]  = ']';
+						 	p[4]  = '*';
+							p    += 5;
+							left -= 5;
+#endif
+						}
+						break;
+
+					default:							/* <spec chr> => \<spec chr> */
+					 	p[0]  = '\\';
+					 	p[1]  = c;
+						p    += 2;
+						left -= 2;
+				} 				
 			}
-			regexp[0] = '^';
-			regexp[1] = '(';
-
-			clen = 2;
-			for (j = end; j <= i; j++) {
-
-				int c;
-				if (j != end) {
-					regexp[clen++] = '|';
-				}
-				/* copy mangled filename */
-				for (c = 0; c < blacklist->entries[j].path_length; c++) {
-					if (strchr("^.[]$()|*+?{}\\", blacklist->entries[j].path[c])) {
-						regexp[clen++] = '\\';
-					}
-					regexp[clen++] = blacklist->entries[j].path[c];
-				}
+		}
+		/* If we ran out space in regexp or on last entry, compile the regexp and add to list */
+		if (i < i_max || entry == last_entry) {
+			size_t reg_err;
+			/* but back up to last completed entry if we ran out of space */
+ 			if (i < i_max) {
+				p = last - 1;
+			} else {
+				entry++;
 			}
-			regexp[clen++] = ')';
-			regexp[clen] = '\0';
+
+			*p++ = ')';
+			*p = '\0';
 
 			it = (zend_regexp_list*)malloc(sizeof(zend_regexp_list));
 			if (!it) {
 				zend_accel_error(ACCEL_LOG_ERROR, "malloc() failed\n");
 				return;
 			}
-			it->next = NULL;
 
+			it->next = NULL;
 			if ((reg_err = regcomp(&it->comp_regex, regexp, REGEX_MODE)) != 0) {
 				blacklist_report_regexp_error(&it->comp_regex, reg_err);
 			}
-			/* prepare for the next iteration */
-			free(regexp);
-			end = i + 1;
-			rlen = 6;
+
 			*regexp_list_it = it;
 			regexp_list_it = &it->next;
+
+			/* reset regexp pointer after leading (^ */
+			p    = regexp         + 2;
+			left = sizeof(regexp) - 2;
+
+		/* otherwise add | to regexp and bump to next list entry */
+		} else {
+			*p++ = '|';
+			entry++;
 		}
 	}
 }
@@ -182,9 +236,9 @@ static void zend_accel_blacklist_loadone(zend_blacklist *blacklist, char *filena
 void zend_accel_blacklist_load(zend_blacklist *blacklist, char *filename)
 #endif
 {
-	char buf[MAXPATHLEN + 1], real_path[MAXPATHLEN + 1];
+	char buf[MAXPATHLEN + 1], real_path[MAXPATHLEN + 1], *blacklist_path;
 	FILE *fp;
-	int path_length;
+	int path_length, blacklist_path_length;
 	TSRMLS_FETCH();
 
 	if ((fp = fopen(filename, "r")) == NULL) {
@@ -193,6 +247,14 @@ void zend_accel_blacklist_load(zend_blacklist *blacklist, char *filename)
 	}
 
 	zend_accel_error(ACCEL_LOG_DEBUG,"Loading blacklist file:  '%s'", filename);
+
+	strcpy(buf, filename);
+	blacklist_path_length = zend_dirname(buf, strlen(filename));
+	if (buf[0] == '.' && blacklist_path_length == 1) {
+		VCWD_GETCWD(buf, MAXPATHLEN);
+		blacklist_path_length = strlen(buf);
+	}	
+	blacklist_path = zend_strndup(buf, blacklist_path_length);
 
 	memset(buf, 0, sizeof(buf));
 	memset(real_path, 0, sizeof(real_path));
@@ -230,7 +292,7 @@ void zend_accel_blacklist_load(zend_blacklist *blacklist, char *filename)
 		}
 
 		path_dup = zend_strndup(pbuf, path_length);
-		expand_filepath(path_dup, real_path TSRMLS_CC);
+		expand_filepath_ex(path_dup, real_path, blacklist_path, blacklist_path_length TSRMLS_CC);
 		path_length = strlen(real_path);
 
 		free(path_dup);
@@ -247,6 +309,7 @@ void zend_accel_blacklist_load(zend_blacklist *blacklist, char *filename)
 		blacklist->pos++;
 	}
 	fclose(fp);
+	free(blacklist_path);
 	zend_accel_blacklist_update_regexp(blacklist);
 }
 
