@@ -20,8 +20,8 @@ Array
     [0] => /path/to/foo
     [1] => /path/to/foo2
     [2] => /path/to/bar
-    [3] => CWD/nopath.php
-    [4] => CWD/current.php
+    [3] => CWD/tests/nopath.php
+    [4] => CWD/tests/current.php
     [5] => /tmp/path/?nocache.inc
     [6] => /tmp/path/*/somedir
 )
