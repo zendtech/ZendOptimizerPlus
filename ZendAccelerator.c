@@ -1120,6 +1120,7 @@ static zend_persistent_script *cache_script_in_shared_memory(zend_persistent_scr
 {
 	zend_accel_hash_entry *bucket;
 	uint memory_used;
+    int error_type;
 
 	/* Check if script may be stored in shared memory */
 	if (!zend_accel_script_persistable(new_persistent_script)) {
@@ -1178,9 +1179,15 @@ static zend_persistent_script *cache_script_in_shared_memory(zend_persistent_scr
 
 	/* Consistency check */
 	if ((char*)new_persistent_script->mem + new_persistent_script->size != (char*)ZCG(mem)) {
+        if ( ((char*)new_persistent_script->mem + new_persistent_script->size < (char*)ZCG(mem))) {
+            error_type=ACCEL_LOG_ERROR;
+		    zend_shared_alloc_unlock(TSRMLS_C);
+        } else {
+            error_type=ACCEL_LOG_WARNING;
+        }
+
 		zend_accel_error(
-			((char*)new_persistent_script->mem + new_persistent_script->size < (char*)ZCG(mem)) ? ACCEL_LOG_ERROR : ACCEL_LOG_WARNING,
-			"Internal error: wrong size calculation: %s start=0x%08x, end=0x%08x, real=0x%08x\n",
+			error_type, "Internal error: wrong size calculation: %s start=0x%08x, end=0x%08x, real=0x%08x\n",
 			new_persistent_script->full_path,
 			new_persistent_script->mem,
 			(char *)new_persistent_script->mem + new_persistent_script->size,
