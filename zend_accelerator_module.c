@@ -728,6 +728,11 @@ static ZEND_FUNCTION(opcache_compile_file)
 		return;
 	}
 
+	if (!ZCG(enabled) || !accel_startup_ok || !ZCSG(accelerator_enabled)) {
+		zend_error(E_NOTICE, "Opcache seems to be disabled, can't compile file");
+		RETURN_FALSE;
+	}
+
 	if (filename_is_in_cache(script_name, script_name_len)) {
 		RETURN_FALSE;
 	}
