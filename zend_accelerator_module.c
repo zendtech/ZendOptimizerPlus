@@ -743,12 +743,12 @@ static ZEND_FUNCTION(opcache_compile_file)
 	handle.type = ZEND_HANDLE_FILENAME;
 
 	orig_execute_data = EG(current_execute_data);
+
 	zend_try {
 		op_array = zend_compile_file(&handle, ZEND_INCLUDE TSRMLS_CC);
 	} zend_catch {
 		EG(current_execute_data) = orig_execute_data;
-		zend_error(E_WARNING, "Could not compile file %s" TSRMLS_CC, handle.filename);
-		op_array = NULL;
+		zend_error(E_COMPILE_ERROR, "Could not compile file %s" TSRMLS_CC, handle.filename);
 	} zend_end_try();
 
 	if(op_array != NULL) {
