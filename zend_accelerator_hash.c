@@ -36,7 +36,7 @@ void zend_accel_hash_clean(zend_accel_hash *accel_hash)
 	memset(accel_hash->hash_table, 0, sizeof(zend_accel_hash_entry *)*accel_hash->max_num_entries);
 }
 
-void zend_accel_hash_init(zend_accel_hash *accel_hash, zend_uint hash_size)
+zend_uint zend_accel_hash_init(zend_accel_hash *accel_hash, zend_uint hash_size)
 {
 	uint i;
 
@@ -46,7 +46,6 @@ void zend_accel_hash_init(zend_accel_hash *accel_hash, zend_uint hash_size)
 			break;
 		}
 	}
-
 	accel_hash->num_entries = 0;
 	accel_hash->num_direct_entries = 0;
 	accel_hash->max_num_entries = hash_size;
@@ -55,16 +54,18 @@ void zend_accel_hash_init(zend_accel_hash *accel_hash, zend_uint hash_size)
 	accel_hash->hash_table = zend_shared_alloc(sizeof(zend_accel_hash_entry *)*accel_hash->max_num_entries);
 	if (!accel_hash->hash_table) {
 		zend_accel_error(ACCEL_LOG_FATAL, "Insufficient shared memory!");
-		return;
+		return 0;
 	}
 
 	/* set up hash values table */
 	accel_hash->hash_entries = zend_shared_alloc(sizeof(zend_accel_hash_entry)*accel_hash->max_num_entries);
 	if (!accel_hash->hash_entries) {
 		zend_accel_error(ACCEL_LOG_FATAL, "Insufficient shared memory!");
-		return;
+		return 0;
 	}
 	memset(accel_hash->hash_table, 0, sizeof(zend_accel_hash_entry *)*accel_hash->max_num_entries);
+
+	return hash_size;
 }
 
 /* Returns NULL if hash is full

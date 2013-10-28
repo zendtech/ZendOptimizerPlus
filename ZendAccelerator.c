@@ -2461,8 +2461,8 @@ static int zend_accel_init_shm(TSRMLS_D)
 	}
 	ZSMMG(app_shared_globals) = accel_shared_globals;
 
-	zend_accel_hash_init(&ZCSG(hash), ZCG(accel_directives).max_accelerated_files);
-	zend_accel_hash_init(&ZCSG(include_paths), 32);
+	ZCG(accel_directives).max_accelerated_files = zend_accel_hash_init(&ZCSG(hash), ZCG(accel_directives).max_accelerated_files);
+	zend_accel_hash_init(&ZCSG(include_paths), 53);
 
 #if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
 

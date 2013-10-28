@@ -61,7 +61,7 @@ typedef struct _zend_accel_hash {
 	zend_uint               num_direct_entries;
 } zend_accel_hash;
 
-void zend_accel_hash_init(zend_accel_hash *accel_hash, zend_uint hash_size);
+zend_uint zend_accel_hash_init(zend_accel_hash *accel_hash, zend_uint hash_size);
 void zend_accel_hash_clean(zend_accel_hash *accel_hash);
 
 zend_accel_hash_entry* zend_accel_hash_update(
