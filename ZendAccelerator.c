@@ -148,9 +148,36 @@ static inline int is_cacheable_stream_path(const char *filename)
 }
 
 #ifdef HAVE_PHAR_HEADER
+
+#ifndef COMPILE_DL_PHAR
+# define opcache_phar_resolve_alias phar_resolve_alias
+#elif defined(__GNUC__)
+static __typeof__(phar_resolve_alias) *opcache_phar_resolve_alias;
+#else
+static int (*opcache_phar_resolve_alias)(char *alias, int alias_len, char **filename, int *filename_len TSRMLS_DC);
+#endif
+
 static inline int is_phar_relative_alias_path(const char *filename, char **alias, int *alias_len)
 {
-	if (memcmp(filename, "phar://", sizeof("phar://") - 1) == 0
+#ifdef COMPILE_DL_PHAR
+	static int pharloaded = -1;
+
+	/* Only once, retrieve phar_resolve_alias from phar module if loaded */
+	if (pharloaded < 0) {
+		zend_module_entry *phar;
+
+		if (zend_hash_find(&module_registry, "phar", 5, (void**)&phar) == SUCCESS) {
+			opcache_phar_resolve_alias = DL_FETCH_SYMBOL(phar->handle, "phar_resolve_alias");
+			pharloaded = (opcache_phar_resolve_alias ? 1 : 0);
+		} else {
+			pharloaded = 0;
+		}
+	}
+	if (pharloaded &&
+#else
+	if (
+#endif
+			memcmp(filename, "phar://", sizeof("phar://") - 1) == 0
 			&& filename[sizeof("phar://") - 1] != '\0' && filename[sizeof("phar://") - 1] != '/') {
 		char *slash;
 		*alias = (char*)filename + sizeof("phar://") - 1;
@@ -1062,7 +1089,7 @@ char *accel_make_persistent_key_ex(zend_file_handle *file_handle, int path_lengt
 			if (is_phar_relative_alias_path(file_handle->filename, &alias, &alias_len)) {
 				char *phar_path;
 				int phar_path_len;
-				if (phar_resolve_alias(alias, alias_len, &phar_path, &phar_path_len TSRMLS_CC) == SUCCESS) {
+				if (opcache_phar_resolve_alias(alias, alias_len, &phar_path, &phar_path_len TSRMLS_CC) == SUCCESS) {
 					int filename_len = strlen(file_handle->filename);
 					memcpy(ZCG(key), "phar://", sizeof("phar://") -1);
 					memcpy(ZCG(key) + sizeof("phar://") - 1, phar_path, phar_path_len);
