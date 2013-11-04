@@ -148,10 +148,13 @@ static inline int is_cacheable_stream_path(const char *filename)
 }
 
 #ifdef HAVE_PHAR_HEADER
-#ifdef COMPILE_DL_PHAR
-static typeof(phar_resolve_alias) *opcache_phar_resolve_alias;
-#else
+
+#ifndef COMPILE_DL_PHAR
 # define opcache_phar_resolve_alias phar_resolve_alias
+#elif defined(__GNUC__)
+static __typeof__(phar_resolve_alias) *opcache_phar_resolve_alias;
+#else
+static int (*opcache_phar_resolve_alias)(char *alias, int alias_len, char **filename, int *filename_len TSRMLS_DC);
 #endif
 
 static inline int is_phar_relative_alias_path(const char *filename, char **alias, int *alias_len)
