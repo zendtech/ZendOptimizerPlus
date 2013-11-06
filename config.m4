@@ -363,10 +363,6 @@ if test "$flock_type" == "unknown"; then
 	AC_MSG_ERROR([Don't know how to define struct flock on this system[,] set --enable-opcache=no])
 fi
 
-if test -r $phpincludedir"/ext/phar/php_phar.h"; then
- AC_DEFINE([HAVE_PHAR_HEADER], [], [phar header file exists])
-fi
-  
   PHP_NEW_EXTENSION(opcache,
 	ZendAccelerator.c \
 	zend_accelerator_blacklist.c \
