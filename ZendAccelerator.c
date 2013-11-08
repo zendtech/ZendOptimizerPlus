@@ -1034,9 +1034,9 @@ char *accel_make_persistent_key_ex(zend_file_handle *file_handle, int path_lengt
 		if ((size_t)key_length >= sizeof(ZCG(key))) {
 			ZCG(key_len) = 0;
 			return NULL;
-		} 
+		}
 		memcpy(ZCG(key), file_handle->filename, key_length + 1);
-	}
+    }
 
 	*key_len = ZCG(key_len) = key_length;
 	return ZCG(key);
