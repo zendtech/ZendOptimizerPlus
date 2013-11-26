@@ -5,6 +5,7 @@ opcache.enable=1
 opcache.enable_cli=1
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
+<?php if (version_compare(PHP_VERSION, "5.3.0") < 0) die('skip for PHP < 5.3'); ?>
 --FILE--
 <?php
 $tmp = __DIR__ . "/bug65915.inc.php";
