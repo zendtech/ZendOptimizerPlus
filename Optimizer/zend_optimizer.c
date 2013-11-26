@@ -19,6 +19,7 @@
    +----------------------------------------------------------------------+
 */
 
+#include "php.h"
 #include "Optimizer/zend_optimizer.h"
 #include "Optimizer/zend_optimizer_internal.h"
 #include "zend_API.h"
@@ -109,6 +110,61 @@ int zend_optimizer_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC
 	} while (0)
 
 #endif
+
+static int replace_var_by_const(zend_op_array *op_array,
+                                zend_op       *opline,
+                                zend_uint      var,
+                                zval          *val TSRMLS_DC)
+{
+	zend_op *end = op_array->opcodes + op_array->last;
+
+	while (opline < end) {
+		if (ZEND_OP1_TYPE(opline) == IS_VAR &&
+			ZEND_OP1(opline).var == var) {
+			switch (opline->opcode) {
+				case ZEND_FETCH_DIM_W:
+				case ZEND_FETCH_DIM_RW:
+				case ZEND_FETCH_DIM_FUNC_ARG:
+				case ZEND_FETCH_DIM_UNSET:
+				case ZEND_ASSIGN_DIM:
+#if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
+				case ZEND_SEPARATE:
+#endif
+					return 0;
+				case ZEND_SEND_VAR_NO_REF:
+					opline->opcode = ZEND_SEND_VAL;
+					break;
+				default:
+					break;
+			} 
+			ZEND_OP1_TYPE(opline) = IS_CONST;
+#if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
+			opline->op1.constant = zend_optimizer_add_literal(op_array, val TSRMLS_CC);
+#else
+			ZEND_OP1_LITERAL(opline) = *val;
+#endif
+			break;
+		} else if (ZEND_OP2_TYPE(opline) == IS_VAR &&
+				ZEND_OP2(opline).var == var) {
+			switch (opline->opcode) {
+				case ZEND_ASSIGN_REF:
+					return 0;
+				default:
+					break;
+			}
+			ZEND_OP2_TYPE(opline) = IS_CONST;
+#if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
+			opline->op2.constant = zend_optimizer_add_literal(op_array, val TSRMLS_CC);
+#else
+			ZEND_OP2_LITERAL(opline) = *val;
+#endif
+			break;
+		}
+		opline++;
+	}
+
+	return 1;
+}
 
 static void replace_tmp_by_const(zend_op_array *op_array,
                                  zend_op       *opline,
@@ -274,6 +330,8 @@ void zend_optimizer(zend_op_array *op_array TSRMLS_DC)
 	 * - change $i++ to ++$i where possible
 	 */
 #include "Optimizer/pass3.c"
+
+#include "Optimizer/pass4.c"
 
 	/* pass 5:
 	 * - CFG optimization
