@@ -6,6 +6,12 @@
  * - convert INTI_FCALL_BY_NAME, DO_FCALL_BY_NAME into DO_FCALL
  */
 
+#if ZEND_EXTENSION_API_NO > PHP_5_2_X_API_NO
+#define ZEND_IS_CONSTANT_TYPE(t)	(((t) & IS_CONSTANT_TYPE_MASK) == IS_CONSTANT)
+#else
+#define ZEND_IS_CONSTANT_TYPE(t)	((t) == IS_CONSTANT)
+#endif
+
 if (ZEND_OPTIMIZER_PASS_1 & OPTIMIZATION_LEVEL) {
 	int i = 0;
 	zend_op *opline = op_array->opcodes;
@@ -252,6 +258,142 @@ if (ZEND_OPTIMIZER_PASS_1 & OPTIMIZATION_LEVEL) {
 #endif
 				SET_UNUSED(opline->op2);
 				opline->opcode = ZEND_QM_ASSIGN;
+			}
+
+			if (ZEND_OP1_TYPE(opline) != IS_UNUSED) {
+#if ZEND_EXTENSION_API_NO > PHP_5_2_X_API_NO
+				/* for A::B */
+				if (ZEND_OP1_TYPE(opline) == IS_CONST &&
+			        ZEND_OP1_LITERAL(opline).type == IS_STRING) {
+					zval **c;
+					zend_class_entry **pce;
+					if (op_array->scope && 
+						!strncasecmp(Z_STRVAL(ZEND_OP1_LITERAL(opline)),
+						op_array->scope->name, Z_STRLEN(ZEND_OP1_LITERAL(opline)) + 1)) {
+						pce = &op_array->scope;
+					} else { 
+#if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
+						if (zend_hash_quick_find(EG(class_table), 
+								Z_STRVAL(op_array->literals[opline->op1.constant + 1].constant), 
+								Z_STRLEN(op_array->literals[opline->op1.constant].constant) + 1, 
+								Z_HASH_P(&op_array->literals[opline->op1.constant + 1].constant),
+								(void **)&pce) == FAILURE) {
+							break;
+						}
+#else
+						char *lc_name = zend_str_tolower_dup(
+								Z_STRVAL(ZEND_OP1_LITERAL(opline)), Z_STRLEN(ZEND_OP1_LITERAL(opline)));
+						if (zend_hash_find(EG(class_table), lc_name,
+								Z_STRLEN(ZEND_OP1_LITERAL(opline)) + 1, (void **)&pce) == FAILURE) {
+							efree(lc_name);
+							break;
+						}
+						efree(lc_name);
+#endif
+					}
+
+					if (zend_hash_find(&(*pce)->constants_table, Z_STRVAL(ZEND_OP2_LITERAL(opline)),
+						Z_STRLEN(ZEND_OP2_LITERAL(opline)) + 1, (void **) &c) == SUCCESS) {
+						zval t;
+						if (ZEND_IS_CONSTANT_TYPE(Z_TYPE_PP(c))) { 
+							if (!zend_get_persistent_constant(Z_STRVAL_PP(c), Z_STRLEN_PP(c), &t, 1 TSRMLS_CC) ||
+							    ZEND_IS_CONSTANT_TYPE(Z_TYPE(t))) {
+								break;
+							}
+						} else {
+							t = **c;
+							zval_copy_ctor(&t);
+						}
+
+						literal_dtor(&ZEND_OP1_LITERAL(opline));
+						literal_dtor(&ZEND_OP2_LITERAL(opline));
+#if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
+						opline->op1.constant = zend_optimizer_add_literal(op_array, &t TSRMLS_CC);
+#else
+						ZEND_OP1_LITERAL(opline) = t;
+#endif
+						SET_UNUSED(opline->op2);
+						opline->opcode = ZEND_QM_ASSIGN;
+					}
+				} else 
+				/* for self::B */
+#endif
+					if (ZEND_OP2_TYPE(opline) == IS_CONST &&
+						ZEND_OP2_LITERAL(opline).type == IS_STRING &&
+						(opline - 1)->opcode == ZEND_FETCH_CLASS && 
+						ZEND_RESULT((opline - 1)).var == ZEND_OP1(opline).var) {
+					zval **c;
+					zend_class_entry **pce;
+
+#if ZEND_EXTENSION_API_NO > PHP_5_2_X_API_NO
+					if (op_array->scope &&
+						(ZEND_OP1_TYPE(opline - 1) == IS_UNUSED &&
+						((opline - 1)->extended_value & ~ZEND_FETCH_CLASS_NO_AUTOLOAD) == ZEND_FETCH_CLASS_SELF)) {
+						pce = &op_array->scope;
+					} else {
+						break;
+					}
+#else
+					if (op_array->scope &&
+						((ZEND_OP1_TYPE(opline - 1) == IS_UNUSED &&
+					 	((opline - 1)->extended_value & ~ZEND_FETCH_CLASS_NO_AUTOLOAD) == ZEND_FETCH_CLASS_SELF) ||
+						(ZEND_OP2_TYPE(opline - 1) == IS_CONST &&
+						Z_TYPE(ZEND_OP2_LITERAL(opline - 1)) == IS_STRING &&
+						!strncasecmp(Z_STRVAL(ZEND_OP2_LITERAL(opline - 1)),
+							op_array->scope->name, Z_STRLEN(ZEND_OP2_LITERAL(opline - 1)) + 1)))) {
+						pce = &op_array->scope;
+					} else if (ZEND_OP2_TYPE(opline - 1) == IS_CONST &&
+							Z_TYPE(ZEND_OP2_LITERAL(opline - 1)) == IS_STRING) {
+						char *lc_name = zend_str_tolower_dup(
+								Z_STRVAL(ZEND_OP2_LITERAL(opline - 1)), Z_STRLEN(ZEND_OP2_LITERAL(opline - 1)));
+						if (zend_hash_find(EG(class_table), lc_name,
+									Z_STRLEN(ZEND_OP2_LITERAL(opline - 1)) + 1, (void **)&pce) == FAILURE) {
+							efree(lc_name);
+							break;
+						}
+						efree(lc_name);
+					} else {
+						break;
+					}
+#endif
+
+#if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
+					if (zend_hash_quick_find(&(*pce)->constants_table,
+						Z_STRVAL(ZEND_OP2_LITERAL(opline)),
+						Z_STRLEN(ZEND_OP2_LITERAL(opline)) + 1,
+						Z_HASH_P(&ZEND_OP2_LITERAL(opline)), (void **) &c) == SUCCESS)
+#else
+					if (zend_hash_find(&(*pce)->constants_table, Z_STRVAL(ZEND_OP2_LITERAL(opline)),
+						Z_STRLEN(ZEND_OP2_LITERAL(opline)) + 1, (void **) &c) == SUCCESS)
+#endif
+					{
+						zval t;
+						if (ZEND_IS_CONSTANT_TYPE(Z_TYPE_PP(c))) { 
+							if (!zend_get_persistent_constant(Z_STRVAL_PP(c), Z_STRLEN_PP(c), &t, 1 TSRMLS_CC) ||
+							 	ZEND_IS_CONSTANT_TYPE(Z_TYPE(t))) {
+								break;
+							}
+						} else {
+							t = **c;
+							zval_copy_ctor(&t);
+						}
+
+#if ZEND_EXTENSION_API_NO < PHP_5_3_X_API_NO
+						literal_dtor(&ZEND_OP2_LITERAL(opline - 1));
+#endif
+						MAKE_NOP((opline - 1));
+						literal_dtor(&ZEND_OP2_LITERAL(opline));
+
+						ZEND_OP1_TYPE(opline) = IS_CONST;
+#if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
+						opline->op1.constant = zend_optimizer_add_literal(op_array, &t TSRMLS_CC);
+#else
+						ZEND_OP1_LITERAL(opline) = t;
+#endif
+						SET_UNUSED(opline->op2);
+						opline->opcode = ZEND_QM_ASSIGN;
+					}
+				}
 			}
 			break;
 
