@@ -3,6 +3,7 @@ Bug #65915 (Inconsistent results with require return value)
 --INI--
 opcache.enable=1
 opcache.enable_cli=1
+opcache.file_update_protection=0
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
 <?php if (version_compare(PHP_VERSION, "5.3.0") < 0) die('skip for PHP < 5.3'); ?>

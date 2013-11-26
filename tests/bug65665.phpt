@@ -3,6 +3,7 @@ Bug #65665 (Exception not properly caught when opcache enabled)
 --INI--
 opcache.enable=1
 opcache.enable_cli=1
+opcache.file_update_protection=0
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
 <?php if (version_compare(PHP_VERSION, '5.3.0', '<')) die('skip php-5.3 needed'); ?>

@@ -4,6 +4,7 @@ Bug #64353 (Built-in classes can be unavailable with dynamic includes and OPcach
 allow_url_include=1
 opcache.enable=1
 opcache.enable_cli=1
+opcache.file_update_protection=0
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
 --FILE--

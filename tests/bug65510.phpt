@@ -4,6 +4,7 @@ Bug #65510 (5.5.2 crashes in _get_zval_ptr_ptr_var)
 allow_url_include=1
 opcache.enable=1
 opcache.enable_cli=1
+opcache.file_update_protection=0
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
 --FILE--

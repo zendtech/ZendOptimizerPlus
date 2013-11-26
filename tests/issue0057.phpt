@@ -4,6 +4,7 @@ ISSUE #57 (segfaults in drupal7)
 opcache.enable=1
 opcache.enable_cli=1
 opcache.optimization_level=-1
+opcache.file_update_protection=0
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
 --FILE--
