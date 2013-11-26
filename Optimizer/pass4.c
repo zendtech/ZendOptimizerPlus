@@ -1,5 +1,5 @@
 #if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
-#define IS_FUNC(f) (!memcpy(Z_STRVAL(op_array->literals[opline->op1.constant + 1].constant), (f), sizeof(f)))
+#define IS_FUNC(f) (!memcmp(Z_STRVAL(op_array->literals[opline->op1.constant + 1].constant), (f), sizeof(f)))
 #else
 #define IS_FUNC(f) (!strncasecmp(Z_STRVAL(ZEND_OP1_LITERAL(opline)), (f), sizeof(f)))
 #endif
@@ -13,7 +13,8 @@ if (ZEND_OPTIMIZER_PASS_4 & OPTIMIZATION_LEVEL) {
 		switch (opline->opcode) {
 			case ZEND_DO_FCALL:
 				if (opline->extended_value == 1 && (opline - 1)->opcode == ZEND_SEND_VAL &&
-					ZEND_OP1_TYPE(opline - 1) == IS_CONST && ZEND_OP1_LITERAL(opline - 1).type == IS_STRING) {
+					ZEND_OP1_TYPE(opline - 1) == IS_CONST && ZEND_OP1_LITERAL(opline - 1).type == IS_STRING &&
+					ZEND_OP1_TYPE(opline) == IS_CONST && ZEND_OP1_LITERAL(opline).type == IS_STRING) {
 					if (IS_FUNC("function_exists")) {
 						zend_internal_function *func;
 #if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
