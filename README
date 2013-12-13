@@ -37,10 +37,11 @@ after OPcache.
 
 - Restart PHP
 
-Speed Tuning
--------------
+Speed Tuning for Production
+---------------------------
 
-We recommend the following configuration options for best performance.
+We recommend the following configuration options for best performance in a production environment. These settings will
+not be useful in a development environment.
 
 opcache.memory_consumption=128
 opcache.interned_strings_buffer=8
