@@ -1,17 +1,16 @@
-The Zend OPcache
+Zend OPcache
 ================
 
-The Zend OPcache provides faster PHP execution through opcode caching and
-optimization. It improves PHP performance by storing precompiled script
-bytecode in the shared memory. This eliminates the stages of reading code from
-the disk and compiling it on future access. In addition, it applies a few
-bytecode optimization patterns that make code execution faster.
+Zend OPcache provides faster PHP execution through opcode caching and
+optimization. It works by storing precompiled script bytecode in shared memory, 
+which eliminates reading code from disk and compiling it on subsequent requests.
+It also optimizes a few bytecode patterns for faster code execution.
 
 Compatibility
 -------------
 
 This version of Zend OPcache is compatible with PHP 5.2.*, 5.3.*, 5.4.*
-and PHP-5.5 development branch.  PHP 5.2 support may be removed in the future.
+and the PHP-5.5 development branch.  PHP 5.2 support may be removed in the future.
 
 Quick Install
 -------------
@@ -25,39 +24,40 @@ Quick Install
 
 - Install
 
- make install # this will copy opcache.so into PHP extension directory
+ make install # copies opcache.so into the PHP extension directory
 
 - Edit php.ini
 
- zend_extension=/...full path.../opcache.so
+ zend_extension=/full_path_to/opcache.so
 
-NOTE: In case you are going to use Zend OPcache together with Xdebug or Zend Debugger,
-be sure that the debugger is loaded after OPcache. "php -v" must show the debugger
-after OPcache.
+NOTE: If you want to use Zend OPcache together with Xdebug or Zend Debugger,
+ensure that the respective debugging extension is loaded after OPcache. 
+You can verify this with "php -v" or phpinfo(), where the debugging extension must
+appear after OPcache.
 
 - Restart PHP
 
 Speed Tuning
 -------------
 
-We recommend the following configuration options for best performance.
+We recommend the following configuration settings for best performance:
 
-opcache.memory_consumption=128
-opcache.interned_strings_buffer=8
-opcache.max_accelerated_files=4000
-opcache.revalidate_freq=60
-opcache.fast_shutdown=1
-opcache.enable_cli=1
+ opcache.memory_consumption=128
+ opcache.interned_strings_buffer=8
+ opcache.max_accelerated_files=4000
+ opcache.revalidate_freq=60
+ opcache.fast_shutdown=1
+ opcache.enable_cli=1
 
 You also may add the following, but it may break some applications and
-frameworks. Please, read description of these directives and add them on your
+frameworks. Please read the description of these directives. Add them at your
 own risk.
 
-opcache.save_comments=0
-opcache.enable_file_override=1
+ opcache.save_comments=0
+ opcache.enable_file_override=1
 
-In some cases you may like to prefer enabling/disabling some features
-to avoid incompatibilities at the cost of some performance degradation.
+In some cases, you may have to enable or disable some features for better
+compatibility, at the cost of some performance.
 
 Configuration Directives
 ------------------------
@@ -66,12 +66,12 @@ opcache.enable (default "1")
 	OPcache On/Off switch. When set to Off, code is not optimized and cached.
 
 opcache.enable_cli (default "0")
-	Enables the OPcache for the CLI version of PHP. It's mostly for testing
+	Activate OPcache for the CLI version of PHP. It's used mostly for testing
 	and debugging.
 
 opcache.memory_consumption (default "64")
-	The OPcache shared memory storage size. The amount of memory for storing
-	precompiled PHP code in Mbytes.
+	The amount (in Mbytes) of shared memory OPcache uses for storing
+	precompiled PHP code.
 
 opcache.interned_strings_buffer (default "4")
 	The amount of memory for interned strings in Mbytes.
@@ -87,46 +87,47 @@ opcache.max_wasted_percentage (default "5")
 	The maximum percentage of "wasted" memory until a restart is scheduled.
 
 opcache.use_cwd (default "1")
-	When this directive is enabled, the OPcache appends the current working
+	When this setting is enabled, OPcache appends the current working
 	directory to the script key, thus eliminating possible collisions between
-	files with the same name (basename). Disabling the directive improves
-	performance, but may break existing applications.
+	files with the same basename. Disabling the directive improves performance,
+	but may break existing applications.
 
 opcache.validate_timestamps (default "1")
-	When disabled, you must reset the OPcache manually or restart the
-	webserver for changes to the filesystem to take effect.
+	When disabled, you must reset OPcache manually or restart the webserver for
+	changes to the filesystem to take effect.
 	The frequency of the check is controlled by the directive
 	"opcache.revalidate_freq".
 
 opcache.revalidate_freq (default "2")
-	How often (in seconds) to check file timestamps for changes to the shared
-	memory storage allocation. ("1" means validate once per second, but only
-	once per request. "0" means always validate)
+	How often (in seconds) OPcache checks file timestamps for changes to the
+	cached files. 
+	"1" means: validate once per second, but only once per request.
+	"0" means: always validate.
 
 opcache.file_update_protection (default "2")
 	Prevents caching files that are less than this number of seconds old.
-	It protects from caching of incompletely updated files. In case all file
-	updates on your site are atomic, you may increase performance setting it
+	It protects from caching incompletely uploaded files. In case all file
+	updates on your site are atomic, you may increase performance by setting it
 	to "0".
 
 opcache.revalidate_path (default "0")
-	Enables or disables file search in include_path optimization
+	Enables or disables the "file search in include_path" optimization.
 	If the file search is disabled and a cached file is found that uses
 	the same include_path, the file is not searched again. Thus, if a file
 	with the same name appears somewhere else in include_path, it
-	won't be found. Enable this directive if this optimization has an effect on
-	your applications. The default for this directive is disabled, which means
-	that optimization is active.
+	won't be found. Enable this directive if this optimization breaks your 
+	application. The default for this directive is disabled.
 
 opcache.save_comments (default "1")
 	If disabled, all PHPDoc comments are dropped from the code to reduce the
 	size of the optimized code. Disabling "Doc Comments" may break some
-	existing applications and frameworks (e.g. Doctrine, ZF2, PHPUnit)
+	existing applications and frameworks which rely on annotation-style
+	docblocks, for example Doctrine, ZF2 and PHPUnit.
 
 opcache.load_comments (default "1")
-	If disabled, PHPDoc comments are not loaded from SHM, so "Doc Comments"
-	may be always stored (save_comments=1), but not loaded by applications
-	that don't need them anyway.
+	If disabled, PHPDoc comments are not loaded from shared memory, so
+	"Doc Comments" may be always stored (save_comments=1), but not loaded 
+	by applications that don't need them.
 
 opcache.fast_shutdown (default "0")
 	If enabled, a fast shutdown sequence is used for the accelerated code
@@ -134,11 +135,12 @@ opcache.fast_shutdown (default "0")
 	the Zend Engine Memory Manager do the work.
 
 opcache.enable_file_override (default "0")
-	Allow file existence override (file_exists, etc.) performance feature.
+	Enable the file existence override (file_exists() etc.) performance 
+	optimization.
 
 opcache.optimization_level (default "0xffffffff")
 	A bitmask, where each bit enables or disables the appropriate OPcache
-	passes
+	passes.
 
 opcache.inherited_hack (default "1")
 	Enable this hack as a workaround for "can't redeclare class" errors.
@@ -170,12 +172,12 @@ opcache.blacklist_filename
 	3) Code that triggers an OPcache bug.
 
 opcache.max_file_size (default "0")
-	Allows exclusion of large files from being cached. By default all files
-	are cached.
+	When this directive is enabled, files larger than the setting value
+	are not  cached.
 
 opcache.consistency_checks (default "0")
 	Check the cache checksum each N requests.
-	The default value of "0" means that the checks are disabled.
+	The default value of "0" means that the cache is never checked.
 	Because calculating the checksum impairs performance, this directive should
 	be enabled only as part of a debugging process.
 
@@ -190,7 +192,7 @@ opcache.force_restart_timeout (default "180")
 	in the Apache logs when this happens.
 
 opcache.error_log
-	OPcache error_log file name. Empty string assumes "stderr".
+	OPcache error_log file name. Empty string means "stderr".
 
 opcache.log_verbosity_level (default "1")
 	All OPcache errors go to the Web server log.
@@ -203,14 +205,14 @@ opcache.preferred_memory_model
 
 opcache.protect_memory (default "0")
 	Protect the shared memory from unexpected writing during script execution.
-	Useful for internal debugging only.
+	Used for internal debugging only.
 
 opcache.restrict_api (default "")
-	Allows calling OPcache API functions only from PHP scripts which path is
-	started from specified string. The default "" means no restriction.
+	Allows calling OPcache API functions only from PHP scripts from a path that
+	starts from the specified string. The default "" means no restriction.
 
 opcache.mmap_base
-	Mapping base of shared memory segments (for Windows only). All the PHP
+	Mapping base address of shared memory segments (Windows only). All PHP
 	processes have to map shared memory into the same address space. This
-	directive allows to manually fix the "Unable to reattach to base address"
+	directive allows to manually fix "Unable to reattach to base address"
 	errors.
