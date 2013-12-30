@@ -7,6 +7,7 @@ opcache.revalidate_path=1
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
 <?php if (php_sapi_name() != "cli") die("skip CLI only"); ?>
+<?php if (version_compare(PHP_VERSION, '5.4.0', '<')) die('skip php-5.4 needed'); ?>
 --FILE--
 <?php
 $dir = dirname(__FILE__);
