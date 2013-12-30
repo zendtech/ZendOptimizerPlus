@@ -3,11 +3,9 @@ ISSUE #149 (Phar mount points not working this OPcache enabled)
 --INI--
 opcache.enable=1
 opcache.enable_cli=1
-opcache.file_update_protection=0
 phar.readonly=0
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
-<?php if (version_compare(PHP_VERSION, '5.4.0', '<')) die('skip php-5.4 needed'); ?>
 <?php if (!extension_loaded("phar")) die("skip"); ?>
 <?php if (php_sapi_name() != "cli") die("skip CLI only"); ?>
 --FILE--
@@ -22,7 +20,7 @@ $p->setStub($stub);
 unset($p);
 
 include "php_cli_server.inc";
-php_cli_server_start('-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.file_update_protection=0');
+php_cli_server_start('-d opcache.enable=1 -d opcache.enable_cli=1');
 echo file_get_contents('http://' . PHP_CLI_SERVER_ADDRESS . '/issue0149.phar.php');
 echo file_get_contents('http://' . PHP_CLI_SERVER_ADDRESS . '/issue0149.phar.php');
 echo file_get_contents('http://' . PHP_CLI_SERVER_ADDRESS . '/issue0149.phar.php');
