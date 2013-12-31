@@ -3,6 +3,7 @@ Issue #140: "opcache.enable_file_override" doesn't respect "opcache.revalidate_f
 --INI--
 opcache.enable=1
 opcache.enable_cli=1
+opcache.validate_timestamps=1
 opcache.revalidate_freq=0
 opcache.file_update_protection=0
 --SKIPIF--
