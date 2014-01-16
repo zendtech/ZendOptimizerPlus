@@ -85,3 +85,17 @@ mkinstalldirs
 modules
 build
 run-tests.php
+
+# Test specific Ignores
+tests/*.diff
+tests/*.out
+tests/*.php
+tests/*.exp
+tests/*.log
+tests/*.sh
+tests/*/*.diff
+tests/*/*.out
+tests/*/*.php
+tests/*/*.exp
+tests/*/*.log
+tests/*/*.sh
