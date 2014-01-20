@@ -39,10 +39,10 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2013-06-05</date>
- <time>14:17:40</time>
+ <date>2014-01-20</date>
+ <time>21:02:40</time>
  <version>
-  <release>7.0.2</release>
+  <release>7.0.3</release>
   <api>7.0.2</api>
  </version>
  <stability>
@@ -51,16 +51,30 @@
  </stability>
  <license uri="http://www.php.net/license">PHP License</license>
  <notes>
-  - Fixed issue #26 (added opcache_invalidate(string $filename [, bool $force = false]) function)
-  - Fixed issue #74 (Allowed per request OPcache disabling)
-  - Fixed issue #76 (actually we don't need zend_shared_meory_block_header at all)
-  - Fixed issue #78 (incorrect file path validation)
-  - Fixed issue #79 (Optimization Problem/Bug)
-  - Fixed issue #82 (allow comments in blacklist file, lines started with ";")
-  - Fixed issue #91 (fix x64 fixed addresses)
-  - Fxied issue #92 (Compilation warnings)
-  - Fixed issue #97 (Use size_t instead of int to support a cache larger than 2G)
-  - Fixed bug (Avoid possible conditional jump depended on uninitialised value)
+  - Fixed bug #66298 (ext/opcache/Optimizer/zend_optimizer.c has dos-style ^M as lineend)
+  - Added suggestion about opcache.revalidate_freq setting in development environmento
+  - Fixed Issue #140: "opcache.enable_file_override" doesn't respect "opcache.revalidate_freq"
+  - Fixed reavlidate_path=1 behavior to avoid caching of symlinks values.
+  - Fixed opcahce_reset() crash when opcache.protect_memory is set
+  - Fixed bug #66176 (Invalid constant substitution)
+  - Fixed bug #65559 (Opcache: cache not cleared if changes occur while running)
+  - Fixed compatibility with old PHP versions
+  - Fixed bug #65915 (Inconsistent results with require return value)
+  - Fixed issue #115 (path issue when using phar)
+  - Fixed issue #149 (Phar mount points not working with OPcache enabled)
+  - Fixed bug #65845 (Error when Zend Opcache Optimizer is fully enabled).
+  - Added function opcache_compile_file() to load PHP scripts into cache without execution.
+  - Fixed issue #135 (segfault in interned strings if initial memory is too low)
+  - Fixed bug #65665 (Exception not properly caught when opcache enabled)
+  - Fixed issue #128 (opcache_invalidate segmentation fault)
+  - Fixed bug #65510 (5.5.2 crashes in _get_zval_ptr_ptr_var)
+  - Fixed bug #65561 (Zend Opcache on Solaris 11 x86 needs ZEND_MM_ALIGNMENT=4)
+  - Replce ZEND_FETCH_* instructions with IS_CV if possible
+  - Added opcache.restrict_api configuration directive that may limit usage of OPcahce API functions only to patricular script(s)
+  - Added support for glob symbols in blacklist entries (?, *, **)
+  - Improved implementation of NOP removal pass from O(n^2) to O(n)
+  - Fixed bug #65338 (Enabling both php_opcache and php_wincache AVs on shutdown).
+  - Fixed bug #64827 Segfault in zval_mark_grey (zend_gc.c)
  </notes>
  <contents>
   <dir name="/">
@@ -114,6 +128,20 @@
 	<file role="src" name="blacklist.phpt"/>
 	<file role="src" name="opcache-1.blacklist"/>
 	<file role="src" name="opcache-2.blacklist"/>
+	<file role="src" name="bug65510.phpt"/>
+	<file role="src" name="bug65559.phpt"/>
+	<file role="src" name="bug65665.phpt"/>
+	<file role="src" name="bug65845.phpt"/>
+	<file role="src" name="bug65915.phpt"/>
+	<file role="src" name="bug66176.phpt"/>
+	<file role="src" name="issue0115.phpt"/>
+	<file role="src" name="issue0128.phpt"/>
+	<file role="src" name="issue0140.phpt"/>
+	<file role="src" name="issue0149.phpt"/>
+	<file role="src" name="revalidate_path_01.phpt"/>
+	<file role="src" name="blacklist-win32.phpt"/>
+	<file role="src" name="bug66461.phpt"/>
+	<file role="src" name="bug66474.phpt"/>
    </dir> <!-- tests -->
   </dir> <!-- / -->
  </contents>
@@ -132,30 +160,67 @@
  <changelog>
   <release>
    <version>
-    <release>7.0.1</release>
-    <api>7.0.1</api>
+    <release>7.0.3</release>
+    <api>7.0.3</api>
    </version>
    <stability>
     <release>beta</release>
     <api>beta</api>
    </stability>
-   <date>2013-03-25</date>
+   <date>2014-01-20</date>
    <license uri="http://www.php.net/license">PHP License</license>
-   <notes>
-	- Fixed Bug #64490 (add __FreeBSD_kernel__ to allowed FreeBSD defs)
-	- Fixed Bug #64482 (Opcodes for dynamic includes should not be cached)
-	- Fixed Bug #64353 (Built-in classes can be unavailable with dynamic includes and Optimizer+)
-	- Fixed compatibility with ext/phar
-	- Fixed Issue #58 (PHP-5.2 compatibility)
-	- Fixed Issue #57 (segfaults in drupal7)
-	- Fixed Issue #54 (PECL install adds extension= instead of zend_extension= to php.ini)-iii
-	- Allows exclusion of large files from being cached
-	- Save a stat() call by calling sapi_module.get_stat()
-	- Add optional flag to opcache_get_status()
-	- Separate "start_time" from "last_restart_time"
-   </notes>
+	<notes>
+	 - Fixed bug #66298 (ext/opcache/Optimizer/zend_optimizer.c has dos-style ^M as lineend)
+	 - Added suggestion about opcache.revalidate_freq setting in development environmento
+	 - Fixed Issue #140: "opcache.enable_file_override" doesn't respect "opcache.revalidate_freq"
+	 - Fixed reavlidate_path=1 behavior to avoid caching of symlinks values.
+	 - Fixed opcahce_reset() crash when opcache.protect_memory is set
+	 - Fixed bug #66176 (Invalid constant substitution)
+	 - Fixed bug #65559 (Opcache: cache not cleared if changes occur while running)
+	 - Fixed compatibility with old PHP versions
+	 - Fixed bug #65915 (Inconsistent results with require return value)
+	 - Fixed issue #115 (path issue when using phar)
+	 - Fixed issue #149 (Phar mount points not working with OPcache enabled)
+	 - Fixed bug #65845 (Error when Zend Opcache Optimizer is fully enabled).
+	 - Added function opcache_compile_file() to load PHP scripts into cache without execution.
+	 - Fixed issue #135 (segfault in interned strings if initial memory is too low)
+	 - Fixed bug #65665 (Exception not properly caught when opcache enabled)
+	 - Fixed issue #128 (opcache_invalidate segmentation fault)
+	 - Fixed bug #65510 (5.5.2 crashes in _get_zval_ptr_ptr_var)
+	 - Fixed bug #65561 (Zend Opcache on Solaris 11 x86 needs ZEND_MM_ALIGNMENT=4)
+	 - Replce ZEND_FETCH_* instructions with IS_CV if possible
+	 - Added opcache.restrict_api configuration directive that may limit usage of OPcahce API functions only to patricular script(s)
+	 - Added support for glob symbols in blacklist entries (?, *, **)
+	 - Improved implementation of NOP removal pass from O(n^2) to O(n)
+	 - Fixed bug #65338 (Enabling both php_opcache and php_wincache AVs on shutdown).
+	 - Fixed bug #64827 Segfault in zval_mark_grey (zend_gc.c)
+	</notes>
   </release>
 
+  <release>
+   <version>
+    <release>7.0.2</release>
+    <api>7.0.2</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <date>2013-06-05</date>
+   <license uri="http://www.php.net/license">PHP License</license>
+   <notes>
+	- Fixed issue #26 (added opcache_invalidate(string $filename [, bool $force = false]) function)
+	- Fixed issue #74 (Allowed per request OPcache disabling)
+	- Fixed issue #76 (actually we don't need zend_shared_meory_block_header at all)
+	- Fixed issue #78 (incorrect file path validation)
+	- Fixed issue #79 (Optimization Problem/Bug)
+	- Fixed issue #82 (allow comments in blacklist file, lines started with ";")
+	- Fixed issue #91 (fix x64 fixed addresses)
+	- Fxied issue #92 (Compilation warnings)
+	- Fixed issue #97 (Use size_t instead of int to support a cache larger than 2G)
+	- Fixed bug (Avoid possible conditional jump depended on uninitialised value)
+   </notes>
+  </release>
   <release>
    <version>
     <release>7.0.1</release>
