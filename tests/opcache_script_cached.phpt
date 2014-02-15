@@ -9,8 +9,8 @@ opcache.enable_cli=1
 <?php
 
 opcache_compile_file("files/ScriptToCache.php");
-var_dump(opcache_script_cached("files/ScriptToCache.php"));
-var_dump(opcache_script_cached("nonexistent.php"));
+var_dump(opcache_is_script_cached("files/ScriptToCache.php"));
+var_dump(opcache_is_script_cached("nonexistent.php"));
 
 ?>
 --EXPECT--
