@@ -703,13 +703,17 @@ static ZEND_FUNCTION(opcache_reset)
 }
 
 /* {{{ proto bool opcache_is_script_cached(string $script)
-   Return true if the script is cached in OPCache, false if not. */
+   Return true if the script is cached in OPCache, false if it is not cached or if OPCache is not running. */
 static ZEND_FUNCTION(opcache_is_script_cached)
 {
 	char *script_name;
 	int script_name_len;
 
-	if (!(ZCG(enabled) && (ZCG(counted) || ZCSG(accelerator_enabled)))) {
+	if (!validate_api_restriction(TSRMLS_C)) {
+		RETURN_FALSE;
+	}
+
+	if (!ZCG(enabled) || !accel_startup_ok || !ZCSG(accelerator_enabled)) {
 		RETURN_FALSE;
 	}
 
