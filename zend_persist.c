@@ -149,8 +149,10 @@ static void zend_persist_zval(zval *z TSRMLS_DC)
 		case IS_CONSTANT:
 			zend_accel_store_interned_string(z->value.str.val, z->value.str.len + 1);
 			break;
-		case IS_ARRAY:
+#ifdef IS_CONSTANT_ARRAY
 		case IS_CONSTANT_ARRAY:
+#endif
+		case IS_ARRAY:
 			zend_accel_store(z->value.ht, sizeof(HashTable));
 			zend_hash_persist(z->value.ht, (zend_persist_func_t) zend_persist_zval_ptr, sizeof(zval**) TSRMLS_CC);
 			break;

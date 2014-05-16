@@ -252,8 +252,10 @@ static inline zval* zend_clone_zval(zval *src, int bind TSRMLS_DC)
 		    case IS_CONSTANT:
 				Z_STRVAL_P(ret) = (char *) interned_estrndup(Z_STRVAL_P(ret), Z_STRLEN_P(ret));
 				break;
-			case IS_ARRAY:
+#ifdef IS_CONSTANT_ARRAY
 		    case IS_CONSTANT_ARRAY:
+#endif
+			case IS_ARRAY:
 				if (ret->value.ht && ret->value.ht != &EG(symbol_table)) {
 					ALLOC_HASHTABLE(ret->value.ht);
 					zend_hash_clone_zval(ret->value.ht, src->value.ht, 0);
@@ -370,7 +372,9 @@ static void zend_hash_clone_zval(HashTable *ht, HashTable *source, int bind)
 					Z_STRVAL_P(ppz) = (char *) interned_estrndup(Z_STRVAL_P((zval*)p->pDataPtr), Z_STRLEN_P((zval*)p->pDataPtr));
 					break;
 				case IS_ARRAY:
+#ifdef IS_CONSTANT_ARRAY
 			    case IS_CONSTANT_ARRAY:
+#endif
 					if (((zval*)p->pDataPtr)->value.ht && ((zval*)p->pDataPtr)->value.ht != &EG(symbol_table)) {
 						ALLOC_HASHTABLE(ppz->value.ht);
 						zend_hash_clone_zval(ppz->value.ht, ((zval*)p->pDataPtr)->value.ht, 0);

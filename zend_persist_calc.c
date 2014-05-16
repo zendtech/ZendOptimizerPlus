@@ -106,8 +106,10 @@ static uint zend_persist_zval_calc(zval *z TSRMLS_DC)
 		case IS_CONSTANT:
 			ADD_INTERNED_STRING(Z_STRVAL_P(z), Z_STRLEN_P(z) + 1);
 			break;
-		case IS_ARRAY:
+#ifdef IS_CONSTANT_ARRAY
 		case IS_CONSTANT_ARRAY:
+#endif
+		case IS_ARRAY:
 			ADD_DUP_SIZE(z->value.ht, sizeof(HashTable));
 			ADD_SIZE(zend_hash_persist_calc(z->value.ht, (int (*)(void* TSRMLS_DC)) zend_persist_zval_ptr_calc, sizeof(zval**) TSRMLS_CC));
 			break;
