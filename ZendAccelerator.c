@@ -36,7 +36,11 @@
 #include "main/php_open_temporary_file.h"
 #include "zend_API.h"
 #include "zend_ini.h"
+
+#if PHP_VERSION_ID < 50600
 #include "TSRM/tsrm_virtual_cwd.h"
+#endif
+
 #include "zend_accelerator_util_funcs.h"
 #include "zend_accelerator_hash.h"
 
