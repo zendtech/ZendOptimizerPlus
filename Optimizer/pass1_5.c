@@ -13,6 +13,31 @@ if (ZEND_OPTIMIZER_PASS_1 & OPTIMIZATION_LEVEL) {
 
 	while (opline < end) {
 		switch (opline->opcode) {
+		case ZEND_DECLARE_INHERITED_CLASS_DELAYED:
+		{
+			zval *parent_name = &op_array->literals[(opline-1)->op2.constant].constant;
+			zend_class_entry **pce = NULL;
+			if (zend_lookup_class(Z_STRVAL_P(parent_name), Z_STRLEN_P(parent_name), &pce TSRMLS_CC) == FAILURE) {
+				break;
+			}
+			if (do_bind_inherited_class(op_array, opline, CG(class_table), *pce, 1) == NULL) {
+				break;
+			}
+			zend_hash_quick_del(CG(class_table), Z_STRVAL(op_array->literals[opline->op1.constant].constant), Z_STRLEN(op_array->literals[opline->op1.constant].constant), op_array->literals[opline->op1.constant].hash_value);
+
+			/* zend_del_literal */
+			zval_dtor(&op_array->literals[(opline-1)->op2.constant].constant);
+			if ((opline-1)->op2.constant == op_array->last_literal) {
+				op_array->last_literal--;
+			} else {
+				Z_TYPE(op_array->literals[(opline-1)->op2.constant].constant) = IS_NULL;
+			}
+
+			MAKE_NOP((opline-1));
+			op_array->early_binding = -1;
+
+			break;
+		}
 		case ZEND_ADD:
 		case ZEND_SUB:
 		case ZEND_MUL:
