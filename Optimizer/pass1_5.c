@@ -13,6 +13,20 @@ if (ZEND_OPTIMIZER_PASS_1 & OPTIMIZATION_LEVEL) {
 
 	while (opline < end) {
 		switch (opline->opcode) {
+		case ZEND_INSTANCEOF:
+			if ((opline + 1)->opcode == ZEND_FREE) { /* useless instanceof */
+				MAKE_NOP(opline);
+				MAKE_NOP((opline + 1));
+
+				/* It is safe to remove FETCH_CLASS, it was ZEND_FETCH_CLASS_NO_AUTOLOAD anyway */
+				if ((opline - 1)->opcode == ZEND_FETCH_CLASS) {
+					if (ZEND_OP2_TYPE(opline - 1) == IS_CONST) {
+						literal_dtor(&ZEND_OP2_LITERAL(opline - 1));
+					}
+					MAKE_NOP((opline -1));
+				}
+			}
+		break;
 		case ZEND_ADD:
 		case ZEND_SUB:
 		case ZEND_MUL:
