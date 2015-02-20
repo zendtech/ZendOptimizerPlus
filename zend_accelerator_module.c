@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | Zend OPcache                                                         |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2014 The PHP Group                                |
+   | Copyright (c) 1998-2015 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -775,7 +775,7 @@ static ZEND_FUNCTION(opcache_compile_file)
 		op_array = persistent_compile_file(&handle, ZEND_INCLUDE TSRMLS_CC);
 	} zend_catch {
 		EG(current_execute_data) = orig_execute_data;
-		zend_error(E_WARNING, ACCELERATOR_PRODUCT_NAME " could not compile file %s" TSRMLS_CC, handle.filename);
+		zend_error(E_WARNING, ACCELERATOR_PRODUCT_NAME " could not compile file %s", handle.filename);
 	} zend_end_try();
 
 	if(op_array != NULL) {
