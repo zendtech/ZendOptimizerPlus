@@ -9,8 +9,8 @@ opcache.file_update_protection=0
 --FILE--
 <?php
 
-$file_c = __DIR__ . "/bug67215.c.php";
-$file_p = __DIR__ . "/bug67215.p.php";
+$file_c = dirname(__FILE__) . "/bug67215.c.php";
+$file_p = dirname(__FILE__) . "/bug67215.p.php";
 file_put_contents($file_c, "<?php require \"$file_p\"; class c extends p {} ?>");
 file_put_contents($file_p, '<?php class p { protected $var = ""; } ?>');
 require $file_c;
@@ -19,8 +19,8 @@ require $file_c;
 ?>
 --CLEAN--
 <?php
-$file_c = __DIR__ . "/bug67215.c.php";
-$file_p = __DIR__ . "/bug67215.p.php";
+$file_c = dirname(__FILE__) . "/bug67215.c.php";
+$file_p = dirname(__FILE__) . "/bug67215.p.php";
 unlink($file_c);
 unlink($file_p);
 ?>
