@@ -241,6 +241,7 @@ static void update_op2_const(zend_op_array *op_array,
 			case ZEND_ISSET_ISEMPTY_DIM_OBJ:
 			case ZEND_ADD_ARRAY_ELEMENT:
 			case ZEND_INIT_ARRAY:
+			case ZEND_ASSIGN_DIM:
 			case ZEND_UNSET_DIM:
 			case ZEND_FETCH_DIM_R:
 			case ZEND_FETCH_DIM_W:
@@ -290,15 +291,24 @@ static void replace_tmp_by_const(zend_op_array *op_array,
 			 * and allows its reuse. The number of ZEND_CASE instructions
 			 * usually terminated by ZEND_FREE that finally kills the value.
 			 */
-			if (opline->opcode == ZEND_CASE) {
+			if (opline->opcode == ZEND_CASE || opline->opcode == ZEND_FREE) {
 				zend_op *m, *n;
 				int brk = op_array->last_brk_cont;
+				zend_bool in_switch = 0;
 				while (brk--) {
 					if (op_array->brk_cont_array[brk].start <= (opline - op_array->opcodes) &&
 							op_array->brk_cont_array[brk].brk > (opline - op_array->opcodes)) {
+						in_switch = 1;
 						break;
 					}
 				}
+
+				if (!in_switch) {
+					MAKE_NOP(opline);
+					zval_dtor(val);
+					break;
+				}
+
 				m = opline;
 				n = op_array->opcodes + op_array->brk_cont_array[brk].brk + 1;
 				while (m < n) {
@@ -318,10 +328,6 @@ static void replace_tmp_by_const(zend_op_array *op_array,
 					}
 					m++;
 				}
-				zval_dtor(val);
-				break;
-			} else if (opline->opcode == ZEND_FREE) {
-				MAKE_NOP(opline);
 				zval_dtor(val);
 				break;
 			} else {				
