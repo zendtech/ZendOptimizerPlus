@@ -323,7 +323,7 @@ static void replace_tmp_by_const(zend_op_array *op_array,
 						} else if (m->opcode == ZEND_FREE) {
 							MAKE_NOP(m);
 						} else {
-							ZEND_ASSERT(0);
+							/* should not reach */
 						}
 					}
 					m++;
