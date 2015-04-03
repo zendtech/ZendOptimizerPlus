@@ -291,13 +291,11 @@ static void replace_tmp_by_const(zend_op_array *op_array,
 			 * and allows its reuse. The number of ZEND_CASE instructions
 			 * usually terminated by ZEND_FREE that finally kills the value.
 			 */
-			if (opline->opcode == ZEND_CASE || 
+			if (opline->opcode == ZEND_CASE ||  opline->opcode == ZEND_FREE
 #if ZEND_EXTENSION_API_NO < PHP_5_3_X_API_NO
-					opline->opcode == ZEND_SWITCH_FREE
-#else
-					opline->opcode == ZEND_FREE
+					|| opline->opcode == ZEND_SWITCH_FREE
 #endif
-					) {
+				) {
 				zend_op *m, *n;
 				int brk = op_array->last_brk_cont;
 				zend_bool in_switch = 0;
@@ -327,10 +325,9 @@ static void replace_tmp_by_const(zend_op_array *op_array,
 							update_op1_const(op_array, m, val TSRMLS_CC);
 							*val = old_val;
 						} else if (
-#if ZEND_EXTENSION_API_NO < PHP_5_3_X_API_NO
-								m->opcode == ZEND_SWITCH_FREE
-#else
 								m->opcode == ZEND_FREE
+#if ZEND_EXTENSION_API_NO < PHP_5_3_X_API_NO
+								|| m->opcode == ZEND_SWITCH_FREE
 #endif
 								) {
 							MAKE_NOP(m);
