@@ -39,11 +39,11 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2015-01-12</date>
- <time>15:00:00</time>
+ <date>2015-04-14</date>
+ <time>13:00:00</time>
  <version>
-  <release>7.0.4</release>
-  <api>7.0.4</api>
+  <release>7.0.5</release>
+  <api>7.0.5</api>
  </version>
  <stability>
   <release>stable</release>
@@ -51,16 +51,18 @@
  </stability>
  <license uri="http://www.php.net/license">PHP License</license>
  <notes>
-	 - Added function opcache_is_script_cached()
-	 - Fix bug #67111 (Loop variables need to be freed for both "break" and "continue")
-	 - Fix opcache.revalidate_freq per-request behavior
-	 - Fixed bug #67215 (php-cgi work with opcache, may be segmentation fault happen)
-	 - Fixed issue #183 (TMP_VAR is not only used once)
+	 - Fixed bug #69281 (opcache_is_script_cached no longer works)
+	 - Fixed bug #68677 (Use After Free in OPcache)
+	 - Make killing a locker an ERROR event
+	 - Fixed bug #69125 (Array numeric string as key)
+	 - Fixed bug #69038 (switch(SOMECONSTANT) misbehaves)
+	 - Fixed segfault while running with moodle
  </notes>
  <contents>
   <dir name="/">
    <file role="doc" name="README"/>
    <file role="doc" name="LICENSE"/>
+   <file role="doc" name="CREDITS"/>
    <file role="src" name="config.w32"/>
    <file role="src" name="config.m4"/>
    <file role="src" name="zend_accelerator_util_funcs.c"/>
@@ -125,6 +127,9 @@
 	<file role="test" name="bug66461.phpt"/>
 	<file role="test" name="bug66474.phpt"/>
 	<file role="test" name="bug67215.phpt"/>
+	<file role="test" name="bug69038.phpt"/>
+	<file role="test" name="bug69125.phpt"/>
+	<file role="test" name="bug69281.phpt"/>
 	<file role="test" name="blacklist.inc"/>
 	<file role="test" name="is_script_cached.phpt"/>
 	<file role="test" name="php_cli_server.inc"/>
@@ -135,6 +140,7 @@
   <required>
    <php>
     <min>5.2.0</min>
+    <max>5.5.0</max>
    </php>
    <pearinstaller>
     <min>1.4.0b1</min>
@@ -144,6 +150,26 @@
  <providesextension>zendopcache</providesextension>
  <zendextsrcrelease />
  <changelog>
+  <release>
+   <version>
+    <release>7.0.5</release>
+    <api>7.0.5</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <date>2015-04-14</date>
+   <license uri="http://www.php.net/license">PHP License</license>
+	<notes>
+	 - Fixed bug #69281 (opcache_is_script_cached no longer works)
+	 - Fixed bug #68677 (Use After Free in OPcache)
+	 - Make killing a locker an ERROR event
+	 - Fixed bug #69125 (Array numeric string as key)
+	 - Fixed bug #69038 (switch(SOMECONSTANT) misbehaves)
+	 - Fixed segfault while running with moodle
+	</notes>
+  </release>
   <release>
    <version>
     <release>7.0.4</release>
@@ -156,13 +182,13 @@
    <date>2015-01-12</date>
    <license uri="http://www.php.net/license">PHP License</license>
 	<notes>
-	</notes>
-  </release>
 	 - Added function opcache_is_script_cached()
 	 - Fix bug #67111 (Loop variables need to be freed for both "break" and "continue")
 	 - Fix opcache.revalidate_freq per-request behavior
 	 - Fixed bug #67215 (php-cgi work with opcache, may be segmentation fault happen)
 	 - Fixed issue #183 (TMP_VAR is not only used once)
+	</notes>
+  </release>
   <release>
    <version>
     <release>7.0.3</release>
