@@ -10,8 +10,9 @@ bytecode optimization patterns that make code execution faster.
 Compatibility
 -------------
 
-This version of Zend OPcache is compatible with PHP 5.2.*, 5.3.*, 5.4.*
-and PHP-5.5 development branch.  PHP 5.2 support may be removed in the future.
+This version of Zend OPcache is compatible with PHP 5.2.*, 5.3.*, 5.4.* branch.
+
+For PHP 5.5+, please use the bundled Zend Opcache.
 
 Quick Install
 -------------
