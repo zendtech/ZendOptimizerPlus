@@ -46,7 +46,7 @@ in a production environment.
 
 opcache.memory_consumption=128
 opcache.interned_strings_buffer=8
-opcache.max_accelerated_files=4000
+opcache.max_accelerated_files=3907
 opcache.revalidate_freq=60
 opcache.fast_shutdown=1
 opcache.enable_cli=1
@@ -81,7 +81,7 @@ opcache.memory_consumption (default "64")
 opcache.interned_strings_buffer (default "4")
 	The amount of memory for interned strings in Mbytes.
 
-opcache.max_accelerated_files (default "2000")
+opcache.max_accelerated_files (default "3907")
 	The maximum number of keys (scripts) in the OPcache hash table.
 	The number is actually the first one in the following set of prime
 	numbers that is bigger than the one supplied: { 223, 463, 983, 1979, 3907,
