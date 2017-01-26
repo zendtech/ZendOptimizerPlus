@@ -36,7 +36,11 @@
 #include "main/php_open_temporary_file.h"
 #include "zend_API.h"
 #include "zend_ini.h"
+
+#if PHP_VERSION_ID < 50600
 #include "TSRM/tsrm_virtual_cwd.h"
+#endif
+
 #include "zend_accelerator_util_funcs.h"
 #include "zend_accelerator_hash.h"
 
@@ -2172,8 +2176,10 @@ static void accel_fast_zval_ptr_dtor(zval **zval_ptr)
 #else
 		switch (Z_TYPE_P(zvalue) & ~IS_CONSTANT_INDEX) {
 #endif
-			case IS_ARRAY:
-			case IS_CONSTANT_ARRAY: {
+#ifdef IS_CONSTANT_ARRAY
+			case IS_CONSTANT_ARRAY:
+#endif
+			case IS_ARRAY: {
 					TSRMLS_FETCH();
 
 #if ZEND_EXTENSION_API_NO >= PHP_5_3_X_API_NO

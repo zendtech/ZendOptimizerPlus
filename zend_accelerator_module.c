@@ -28,7 +28,11 @@
 #include "zend_accelerator_blacklist.h"
 #include "php_ini.h"
 #include "SAPI.h"
+
+#if PHP_VERSION_ID < 50600
 #include "TSRM/tsrm_virtual_cwd.h"
+#endif
+
 #include "ext/standard/info.h"
 #include "ext/standard/php_filestat.h"
 
