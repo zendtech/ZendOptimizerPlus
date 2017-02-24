@@ -773,6 +773,13 @@ static accel_time_t zend_get_file_handle_timestamp(zend_file_handle *file_handle
 							break;
 						}
 					}
+					if (!strcmp(SG(request_info).path_translated, file_path)) {
+						struct stat *tmpbuf = sapi_get_stat(TSRMLS_C);
+						if (tmpbuf) {
+							memcpy(&statbuf, tmpbuf, sizeof(struct stat));
+							break;
+						}
+					}
 					if (VCWD_STAT(file_path, &statbuf) != -1) {
 						break;
 					}
